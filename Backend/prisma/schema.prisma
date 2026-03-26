@@ -1,30 +1,108 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-// ===============================
-// Prisma Client
-// ===============================
 generator client {
   provider = "prisma-client-js"
 }
 
-// ===============================
-// Database
-// ===============================
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
-// ===============================
-// Demo Model (Connection Test)
-// ===============================
-model DemoUser {
+model Company {
   id        String   @id @default(uuid())
   name      String
   email     String   @unique
+  phone     String?
+  address   String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users      User[]
+  products   Product[]
+  customers  Customer[]
+  invoices   Invoice[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(STAFF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  invoices  Invoice[]
+}
+
+enum Role {
+  OWNER
+  STAFF
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  stock       Int      @default(0)
+  unit        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  companyId    String
+  company      Company @relation(fields: [companyId], references: [id])
+  invoiceItems InvoiceItem[]
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  invoices  Invoice[]
+}
+
+model Invoice {
+  id          String        @id @default(uuid())
+  invoiceNo   String
+  status      InvoiceStatus @default(UNPAID)
+  totalAmount Float
+  dueDate     DateTime?
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  items       InvoiceItem[]
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model InvoiceItem {
+  id        String @id @default(uuid())
+  quantity  Int
+  unitPrice Float
+  total     Float
+
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
 }
