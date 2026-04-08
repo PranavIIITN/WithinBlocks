@@ -1,4 +1,4 @@
-import {register} from "./auth.service.js";
+import {register, login} from "./auth.service.js";
 
 const registerController = async (req, res, next) => {
     try {
@@ -9,8 +9,9 @@ const registerController = async (req, res, next) => {
         const result = await register({companyName, name, email, password});
 
         //Send response
-        res.status(201).json({
+        res.status(200).json({
             success: true,
+            token: result.token,
             message: "Company and account created successfully",
             data: {
                 company: {
@@ -31,4 +32,31 @@ const registerController = async (req, res, next) => {
     }
 };
 
-export {registerController};
+const loginController = async (req, res, next) => {
+    try {
+        //Get data from the request body
+        const {email, password} = req.body;
+
+        //Pass to service
+        const result = await login({email, password});
+
+        //Send response
+        res.status(201).json({
+            success: true,
+            message: "Logged in successfully",
+            data: {
+                token: result.token,
+                user: {
+                    id: result.user.id,
+                    name: result.user.name,
+                    email: result.user.email,
+                    role: result.user.role,
+                },
+            },
+        });
+    } catch(error) {
+        next(error);
+    }
+};
+
+export {registerController, loginController};
