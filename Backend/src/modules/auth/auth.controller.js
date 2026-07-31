@@ -9,7 +9,7 @@ const registerController = async (req, res, next) => {
         const result = await register({companyName, name, email, password});
 
         //Send response
-        res.status(200).json({
+        res.status(201).json({
             success: true,
             token: result.token,
             message: "Company and account created successfully",
@@ -41,7 +41,7 @@ const loginController = async (req, res, next) => {
         const result = await login({email, password});
 
         //Send response
-        res.status(201).json({
+        res.status(200).json({
             success: true,
             message: "Logged in successfully",
             data: {
