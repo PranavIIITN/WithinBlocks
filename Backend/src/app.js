@@ -1,5 +1,6 @@
 import express from "express";
 import authRoutes from "./modules/auth/auth.routes.js";  // importing authentication route
+import productRoutes from "./modules/product/product.routes.js";
 
 const app = express();
 
@@ -8,6 +9,7 @@ app.use(express.json());
 
 // 2. Auth Route
 app.use("/api/auth", authRoutes); 
+app.use("/api/products", productRoutes);
 
 // 3. Global error handler
 app.use((err, req, res, next) => {
