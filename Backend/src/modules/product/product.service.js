@@ -17,4 +17,33 @@ const createProduct = async (companyId, data) => {
     return product;
 };
 
-export { createProduct };
+const getAllProducts = async (companyId) => {
+    const products = await prisma.product.findMany({
+        where: { companyId },
+        orderBy: { createdAt: "desc" },
+    });
+    return products;
+};
+
+const getProductById = async (id, companyId) => {
+    const product = await prisma.product.findFirst({
+        where: { id, companyId },
+    });
+    return product;
+};
+
+const updateProduct = async (id, companyId, data) => {
+    const product = await prisma.product.update({
+        where: { id, companyId },
+        data,
+    });
+    return product;
+};
+
+const deleteProduct = async (id, companyId) => {
+    await prisma.product.delete({
+        where: { id, companyId },
+    });
+};
+
+export { createProduct, getAllProducts, getProductById, updateProduct, deleteProduct };
