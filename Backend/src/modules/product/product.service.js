@@ -6,6 +6,7 @@ const createProduct = async (companyId, data) => {
             name: data.name,
             description: data.description,
             price: data.price,
+            priceType: data.priceType,
             stock: data.stock,
             ean: data.ean,
             unit: data.unit,

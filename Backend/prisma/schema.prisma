@@ -12,6 +12,11 @@ model Company {
   email     String   @unique
   phone     String?
   address   String?
+  gstin     String?
+  invoicePrefix  String  @default("INV")
+  invoiceCounter Int     @default(1)
+  financialYear  String  @default("2526")
+  logo      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -48,9 +53,12 @@ model Product {
   name        String
   description String?
   price       Float
+  priceType   PriceType @default(EXCLUSIVE)
   stock       Int      @default(0)
   ean         String?
   unit        String?
+  hsn         String?
+  image       String?
   tax         Float?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -58,6 +66,11 @@ model Product {
   companyId    String
   company      Company @relation(fields: [companyId], references: [id])
   invoiceItems InvoiceItem[]
+}
+
+enum PriceType {
+  INCLUSIVE
+  EXCLUSIVE
 }
 
 model Customer {
@@ -79,7 +92,12 @@ model Invoice {
   id          String        @id @default(uuid())
   invoiceNo   String
   status      InvoiceStatus @default(UNPAID)
-  totalAmount Float
+  subtotal    Float         // total before tax
+  cgst        Float?        // 50% of tax for intra-state
+  sgst        Float?        // 50% of tax for intra-state
+  igst        Float?        // full tax for inter-state
+  taxAmount   Float         // total tax amount
+  totalAmount Float         // final total after tax
   dueDate     DateTime?
   notes       String?
   createdAt   DateTime      @default(now())
@@ -95,6 +113,7 @@ model Invoice {
 }
 
 enum InvoiceStatus {
+  DRAFT
   UNPAID
   PAID
   OVERDUE
@@ -105,7 +124,11 @@ model InvoiceItem {
   id        String @id @default(uuid())
   quantity  Int
   unitPrice Float
-  total     Float
+  tax       Float?  // tax percentage for this item
+  cgst      Float?  // cgst amount for this item
+  sgst      Float?  // sgst amount for this item
+  igst      Float?  // igst amount for this item
+  total     Float   // final total including tax
 
   invoiceId String
   invoice   Invoice @relation(fields: [invoiceId], references: [id])
