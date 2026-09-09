@@ -3,12 +3,14 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import AppLayout from './layouts/AppLayout'
+import Products from './pages/Products'
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/products" element={<Products />} />
       <Route path="/" element={<AppLayout />}>
         <Route index element={<Dashboard />} />
       </Route>

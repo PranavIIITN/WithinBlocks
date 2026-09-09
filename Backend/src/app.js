@@ -3,9 +3,14 @@ import authRoutes from "./modules/auth/auth.routes.js";  // importing authentica
 import productRoutes from "./modules/product/product.routes.js";
 import customerRoutes from "./modules/customer/customer.routes.js";
 import invoiceRoutes from "./modules/invoice/invoice.routes.js";
-
+import cors from 'cors';
 
 const app = express();
+
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true,
+}))
 
 // 1. Core middleware
 app.use(express.json()); 

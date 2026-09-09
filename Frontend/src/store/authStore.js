@@ -1,9 +1,18 @@
 import { create } from 'zustand'
 
+const parseJSON = (key) => {
+  try {
+    const item = localStorage.getItem(key)
+    return item && item !== 'undefined' ? JSON.parse(item) : null
+  } catch {
+    return null
+  }
+}
+
 const useAuthStore = create((set) => ({
   token: localStorage.getItem('token') || null,
-  user: JSON.parse(localStorage.getItem('user')) || null,
-  company: JSON.parse(localStorage.getItem('company')) || null,
+  user: parseJSON('user'),
+  company: parseJSON('company'),
 
   setAuth: (token, user, company) => {
     localStorage.setItem('token', token)
