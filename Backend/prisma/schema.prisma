@@ -17,6 +17,7 @@ model Company {
   invoiceCounter Int     @default(1)
   financialYear  String  @default("2526")
   logo      String?
+  signature String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

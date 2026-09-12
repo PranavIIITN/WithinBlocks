@@ -3,7 +3,9 @@ import authRoutes from "./modules/auth/auth.routes.js";  // importing authentica
 import productRoutes from "./modules/product/product.routes.js";
 import customerRoutes from "./modules/customer/customer.routes.js";
 import invoiceRoutes from "./modules/invoice/invoice.routes.js";
+import uploadRoutes from "./modules/upload/upload.routes.js";
 import cors from 'cors';
+
 
 const app = express();
 
@@ -20,6 +22,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/invoices", invoiceRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // 3. Global error handler
 app.use((err, req, res, next) => {
