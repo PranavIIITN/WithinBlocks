@@ -16,8 +16,8 @@ export default function Login() {
     setError('')
     try {
       const res = await api.post('/auth/login', form)
-      const { token, user } = res.data.data
-      setAuth(token, user, user.company)
+      const { token, user, company } = res.data.data
+      setAuth(token, user, company)
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong')

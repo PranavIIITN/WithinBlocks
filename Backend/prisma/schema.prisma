@@ -50,19 +50,21 @@ enum Role {
 }
 
 model Product {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
   description String?
-  price       Float
+  mrp         Float?    // Maximum Retail Price
+  price       Float     // Selling price
   priceType   PriceType @default(EXCLUSIVE)
-  stock       Int      @default(0)
+  stock       Int       @default(0)
+  unit        String?   // unit code e.g. KGS, PCS, MLT
+  netQuantity Float?    // e.g. 500 for 500g
   ean         String?
-  unit        String?
   hsn         String?
   image       String?
   tax         Float?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   companyId    String
   company      Company @relation(fields: [companyId], references: [id])

@@ -50,7 +50,10 @@ const register = async ({companyName, name, email, password}) => {
 const login = async ({email, password}) => {
     
     //Step 1 Checking if user exists
-    const user = await prisma.user.findUnique({where : {email}});
+    const user = await prisma.user.findUnique({
+        where : {email},
+        include: {company: true},
+    });
     if(!user) {
         const error = new Error("User does not exist");
         error.statusCode = 401;

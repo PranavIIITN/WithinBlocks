@@ -7,6 +7,8 @@ import Customers from './pages/Customers'
 import Invoices from './pages/Invoices'
 import AppLayout from './layouts/AppLayout'
 import CreateInvoice from './pages/CreateInvoice'
+import AddProduct from './pages/AddProduct'
+
 
 
 
@@ -18,6 +20,7 @@ function App() {
       <Route path="/" element={<AppLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="products" element={<Products />} />
+        <Route path="products/new" element={<AddProduct />} /> 
         <Route path="customers" element={<Customers />} />
         <Route path="invoices" element={<Invoices />} />
         <Route path="invoices/new" element={<CreateInvoice />} />

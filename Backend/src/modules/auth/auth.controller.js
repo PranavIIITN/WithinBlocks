@@ -11,9 +11,9 @@ const registerController = async (req, res, next) => {
         //Send response
         res.status(201).json({
             success: true,
-            token: result.token,
             message: "Company and account created successfully",
             data: {
+                token: result.token,
                 company: {
                     id: result.company.id,
                     name: result.company.name,
@@ -51,6 +51,10 @@ const loginController = async (req, res, next) => {
                     name: result.user.name,
                     email: result.user.email,
                     role: result.user.role,
+                },
+                company: {                          // ← add this
+                    id: result.user.company.id,
+                    name: result.user.company.name,
                 },
             },
         });
