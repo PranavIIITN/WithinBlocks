@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../services/api'
+import { INDIAN_STATES } from '../constants/indianStates'
 
 export default function Customers() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({
-    name: '', email: '', phone: '', address: '', gstin: ''
+    name: '', email: '', phone: '', address: '', state: '', gstin: ''
   })
 
   const { data: customers = [], isLoading } = useQuery({
@@ -20,7 +21,7 @@ export default function Customers() {
     onSuccess: () => {
       queryClient.invalidateQueries(['customers'])
       setShowAdd(false)
-      setForm({ name: '', email: '', phone: '', address: '', gstin: '' })
+      setForm({ name: '', email: '', phone: '', address: '', state: '', gstin: '' })
     },
   })
 
@@ -73,16 +74,16 @@ export default function Customers() {
           <table className="w-full border-collapse text-[13px]">
             <thead>
               <tr className="bg-[#fafaf8]">
-                {['Name', 'Email', 'Phone', 'Address', 'GSTIN', ''].map((h) => (
+                {['Name', 'Email', 'Phone', 'Address', 'State', 'GSTIN', ''].map((h) => (
                   <th key={h} className="text-left px-4 py-2.5 text-[11px] font-medium text-[#5f5e5a] border-b border-[#d1d0c9]">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-[13px] text-[#888780]">Loading...</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-[13px] text-[#888780]">Loading...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-[13px] text-[#888780]">No customers found</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-[13px] text-[#888780]">No customers found</td></tr>
               ) : (
                 filtered.map((c) => (
                   <tr key={c.id} className="hover:bg-[#fafaf8] border-b border-[#e8e7e0] last:border-0">
@@ -90,6 +91,7 @@ export default function Customers() {
                     <td className="px-4 py-3 text-[#5f5e5a]">{c.email || '—'}</td>
                     <td className="px-4 py-3 text-[#5f5e5a]">{c.phone || '—'}</td>
                     <td className="px-4 py-3 text-[#5f5e5a]">{c.address || '—'}</td>
+                    <td className="px-4 py-3 text-[#5f5e5a]">{c.state || '—'}</td>
                     <td className="px-4 py-3 font-mono text-[12px] text-[#5f5e5a]">{c.gstin || '—'}</td>
                     <td className="px-4 py-3">
                       <button
@@ -141,6 +143,16 @@ export default function Customers() {
                 <label className="block text-[12px] font-medium text-[#1a1a18] mb-1.5">Address</label>
                 <input value={form.address} onChange={e => setForm({...form, address: e.target.value})}
                   className="w-full px-3 py-2 rounded-lg border border-[#b4b2a9] bg-[#fafaf8] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]" />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-medium text-[#1a1a18] mb-1.5">State *</label>
+                <select value={form.state} onChange={e => setForm({...form, state: e.target.value})}
+                  className="w-full px-3 py-2 rounded-lg border border-[#b4b2a9] bg-[#fafaf8] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]"
+                  required>
+                  <option value="" disabled>Select state</option>
+                  {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
               </div>
 
               <div>

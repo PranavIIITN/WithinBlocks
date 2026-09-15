@@ -91,12 +91,10 @@ const createInvoice = async (companyId, userId, data) => {
     throw error;
   }
 
-  // Determine intra or inter state
-  const sellerStateCode = company.gstin?.substring(0, 2);
-  const customerStateCode = customer.gstin?.substring(0, 2);
-  const isInterState = sellerStateCode && customerStateCode
-    ? sellerStateCode !== customerStateCode
-    : false;
+  // Determine intra or inter state — now based on the explicit `state`
+  // field on Company/Customer (required since the schema migration),
+  // rather than inferring it from GSTIN prefixes.
+  const isInterState = company.state !== customer.state;
 
   const isDraft = data.status === "DRAFT";
 

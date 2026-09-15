@@ -7,6 +7,7 @@ const createCustomer = async (companyId, data) => {
             email: data.email,
             phone: data.phone,
             address: data.address,
+            state: data.state,
             gstin: data.gstin,
             companyId,
         },

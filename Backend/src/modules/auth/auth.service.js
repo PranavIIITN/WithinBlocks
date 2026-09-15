@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import prisma from "../../lib/prisma.js";
 import {generateToken} from "../../utils/jwt.js";
 
-const register = async ({companyName, name, email, password}) => {
+const register = async ({companyName, state, name, email, password}) => {
     
     //Step 1: Check if email already exists
     const existingUser = await prisma.user.findUnique({where : {email}});
@@ -19,6 +19,7 @@ const register = async ({companyName, name, email, password}) => {
     const company = await prisma.company.create({
         data: {
             name: companyName,
+            state,
             email,
             users: {
                 create: {

@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
+import { INDIAN_STATES } from '../constants/indianStates'
 
 export default function Register() {
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
   const [form, setForm] = useState({
     companyName: '',
+    state: '',
     name: '',
     email: '',
     password: '',
@@ -34,12 +36,12 @@ export default function Register() {
     try {
       const res = await api.post('/auth/register', {
         companyName: form.companyName,
+        state: form.state,
         name: form.name,
         email: form.email,
         password: form.password,
       })
-      const token = res.data.token
-      const { user, company } = res.data.data
+      const { token, user, company } = res.data.data
       setAuth(token, user, company)
       navigate('/')
     } catch (err) {
@@ -114,6 +116,26 @@ export default function Register() {
               style={{ border: '1px solid #e4e4e7', background: '#fafafa' }}
               required
             />
+          </div>
+
+          {/* Company state */}
+          <div>
+            <label className="block text-[12px] font-medium text-[#09090b] mb-1.5">
+              Company state *
+            </label>
+            <select
+              value={form.state}
+              onChange={(e) => setForm({ ...form, state: e.target.value })}
+              className="w-full px-3 py-2.5 rounded-lg text-[13px] text-[#09090b] outline-none"
+              style={{ border: '1px solid #e4e4e7', background: '#fafafa' }}
+              required
+            >
+              <option value="" disabled>Select state</option>
+              {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <p className="text-[11px] mt-1" style={{ color: '#a1a1aa' }}>
+              Used to determine CGST/SGST vs IGST on your invoices
+            </p>
           </div>
 
           {/* Your name */}

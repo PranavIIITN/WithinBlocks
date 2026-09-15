@@ -3,10 +3,10 @@ import {register, login} from "./auth.service.js";
 const registerController = async (req, res, next) => {
     try {
         //Get data from the request body
-        const {companyName, name, email, password} = req.body;
+        const {companyName, state, name, email, password} = req.body;
 
         //Pass to service
-        const result = await register({companyName, name, email, password});
+        const result = await register({companyName, state, name, email, password});
 
         //Send response
         res.status(201).json({
@@ -17,6 +17,10 @@ const registerController = async (req, res, next) => {
                 company: {
                     id: result.company.id,
                     name: result.company.name,
+                    state: result.company.state,
+                    gstin: result.company.gstin,
+                    address: result.company.address,
+                    phone: result.company.phone,
                 },
                 user: {
                     id: result.user.id,
@@ -52,9 +56,13 @@ const loginController = async (req, res, next) => {
                     email: result.user.email,
                     role: result.user.role,
                 },
-                company: {                          // ← add this
+                company: {
                     id: result.user.company.id,
                     name: result.user.company.name,
+                    state: result.user.company.state,
+                    gstin: result.user.company.gstin,
+                    address: result.user.company.address,
+                    phone: result.user.company.phone,
                 },
             },
         });

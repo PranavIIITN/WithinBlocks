@@ -109,11 +109,11 @@ export default function CreateInvoice() {
     setItems(items.map(i => i.productId === productId ? { ...i, [field]: value } : i))
   }
 
-  // Determine intra vs inter state — mirrors Backend/src/modules/invoice/invoice.service.js
-  const sellerStateCode = company?.gstin?.substring(0, 2)
-  const customerStateCode = selectedCustomer?.gstin?.substring(0, 2)
-  const isInterState = sellerStateCode && customerStateCode
-    ? sellerStateCode !== customerStateCode
+  // Determine intra vs inter state — mirrors Backend/src/modules/invoice/invoice.service.js.
+  // Based on the explicit `state` field (now required on Company/Customer),
+  // not inferred from GSTIN prefixes.
+  const isInterState = Boolean(company?.state) && Boolean(selectedCustomer?.state)
+    ? company.state !== selectedCustomer.state
     : false
 
   // Mirrors the backend's calculateTax() helper exactly, so the preview
@@ -518,9 +518,9 @@ export default function CreateInvoice() {
             <div>
               {items.length > 0 && (
                 <div className="text-[11px] text-[#71717a] mb-1.5">
-                  {company?.gstin && selectedCustomer?.gstin
+                  {company?.state && selectedCustomer?.state
                     ? (isInterState ? 'Inter-state transaction — IGST applies' : 'Intra-state transaction — CGST + SGST applies')
-                    : 'Add GSTIN for company/customer for an accurate tax split'}
+                    : 'Add a state for your company/customer for an accurate tax split'}
                 </div>
               )}
               <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #e4e4e7' }}>
