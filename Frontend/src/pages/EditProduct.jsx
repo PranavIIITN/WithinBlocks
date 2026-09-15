@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState, useRef, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Upload, Package } from 'lucide-react'
 import api from '../services/api'
 
@@ -24,44 +24,61 @@ const UNITS = [
 
 const GST_RATES = [0, 5, 12, 18, 28]
 
-export default function AddProduct() {
+export default function EditProduct() {
   const navigate = useNavigate()
+  const { id } = useParams()
   const queryClient = useQueryClient()
   const fileInputRef = useRef(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [imageFile, setImageFile] = useState(null)
-  const [form, setForm] = useState({
-    name: '',
-    description: '',
-    mrp: '',
-    price: '',
-    priceType: 'EXCLUSIVE',
-    stock: '',
-    unit: '',
-    netQuantity: '',
-    tax: '',
-    ean: '',
-    hsn: '',
+  const [form, setForm] = useState(null)
+
+  // Fetch existing product
+  const { data: product, isLoading } = useQuery({
+    queryKey: ['product', id],
+    queryFn: () => api.get(`/products/${id}`).then(res => res.data.data),
   })
 
-  // Validation — name and price are required
-  const isValid = form.name.trim() !== '' && form.price !== '' && parseFloat(form.price) > 0
+  // Pre-fill form when product loads
+  useEffect(() => {
+    if (product) {
+      setForm({
+        name: product.name || '',
+        description: product.description || '',
+        mrp: product.mrp || '',
+        price: product.price || '',
+        priceType: product.priceType || 'EXCLUSIVE',
+        stock: product.stock || 0,
+        unit: product.unit || '',
+        netQuantity: product.netQuantity || '',
+        tax: product.tax || '',
+        ean: product.ean || '',
+        hsn: product.hsn || '',
+      })
+      if (product.image) {
+        setImagePreview(product.image)
+      }
+    }
+  }, [product])
 
-  const createMutation = useMutation({
+  const updateMutation = useMutation({
     mutationFn: async (data) => {
-      const res = await api.post('/products', data)
-      const product = res.data.data
+      const res = await api.put(`/products/${id}`, data)
+      const updated = res.data.data
+
       if (imageFile) {
         const formData = new FormData()
         formData.append('image', imageFile)
-        await api.post(`/upload/product/${product.id}`, formData, {
+        await api.post(`/upload/product/${id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
       }
-      return product
+
+      return updated
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['products'])
+      queryClient.invalidateQueries(['product', id])
       navigate('/products')
     },
   })
@@ -87,20 +104,13 @@ export default function AddProduct() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!isValid) return
-
-    createMutation.mutate({
-      name: form.name.trim(),
-      description: form.description.trim() || undefined,
+    updateMutation.mutate({
+      ...form,
       mrp: form.mrp ? parseFloat(form.mrp) : undefined,
       price: parseFloat(form.price),
-      priceType: form.priceType,
       stock: parseInt(form.stock) || 0,
-      unit: form.unit || undefined,
       netQuantity: form.netQuantity ? parseFloat(form.netQuantity) : undefined,
-      tax: form.tax !== '' ? parseFloat(form.tax) : undefined,
-      ean: form.ean.trim() || undefined,
-      hsn: form.hsn.trim() || undefined,
+      tax: form.tax ? parseFloat(form.tax) : undefined,
     })
   }
 
@@ -108,6 +118,14 @@ export default function AddProduct() {
   const inputStyle = { border: '1px solid #e4e4e7', background: '#fafafa' }
   const labelClass = "block text-[12px] font-medium text-[#09090b] mb-1.5"
   const sectionClass = "bg-white rounded-xl p-5 mb-4"
+
+  if (isLoading || !form) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-[13px] text-[#71717a]">Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -122,7 +140,7 @@ export default function AddProduct() {
             Products
           </button>
           <span className="text-[#e4e4e7]">·</span>
-          <div className="text-[14px] font-semibold text-[#09090b]">Add product</div>
+          <div className="text-[14px] font-semibold text-[#09090b]">Edit — {product?.name}</div>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -134,11 +152,11 @@ export default function AddProduct() {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={createMutation.isPending || !isValid}
-            className="px-4 py-1.5 rounded-lg text-[13px] font-medium text-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled={updateMutation.isPending}
+            className="px-4 py-1.5 rounded-lg text-[13px] font-medium text-white cursor-pointer disabled:opacity-50"
             style={{ background: '#2563eb' }}
           >
-            {createMutation.isPending ? 'Saving...' : 'Save product'}
+            {updateMutation.isPending ? 'Saving...' : 'Save changes'}
           </button>
         </div>
       </div>
@@ -211,18 +229,13 @@ export default function AddProduct() {
                   <div className="text-[13px] font-semibold text-[#09090b] mb-4">Basic information</div>
                   <div className="flex flex-col gap-4">
                     <div>
-                      <label className={labelClass}>
-                        Product name <span className="text-[#ef4444]">*</span>
-                      </label>
+                      <label className={labelClass}>Product name *</label>
                       <input
                         value={form.name}
                         onChange={e => setForm({...form, name: e.target.value})}
-                        placeholder="e.g. Mango Pickle 500g"
                         className={inputClass}
-                        style={{
-                          ...inputStyle,
-                          borderColor: form.name.trim() === '' && form.name !== '' ? '#ef4444' : '#e4e4e7'
-                        }}
+                        style={inputStyle}
+                        required
                       />
                     </div>
                     <div>
@@ -230,7 +243,6 @@ export default function AddProduct() {
                       <textarea
                         value={form.description}
                         onChange={e => setForm({...form, description: e.target.value})}
-                        placeholder="Brief description..."
                         rows={2}
                         className={inputClass}
                         style={{ ...inputStyle, resize: 'none' }}
@@ -244,32 +256,29 @@ export default function AddProduct() {
                   <div className="text-[13px] font-semibold text-[#09090b] mb-4">Pricing</div>
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                      <label className={labelClass}>MRP <span className="text-[#71717a] font-normal">(printed on product)</span></label>
+                      <label className={labelClass}>MRP</label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-[#71717a]">₹</span>
                         <input
                           type="number"
                           value={form.mrp}
                           onChange={e => setForm({...form, mrp: e.target.value})}
-                          placeholder="0.00"
                           className={inputClass}
                           style={{ ...inputStyle, paddingLeft: '24px' }}
                         />
                       </div>
                     </div>
                     <div>
-                      <label className={labelClass}>
-                        Selling price <span className="text-[#ef4444]">*</span>
-                      </label>
+                      <label className={labelClass}>Selling price *</label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-[#71717a]">₹</span>
                         <input
                           type="number"
                           value={form.price}
                           onChange={e => setForm({...form, price: e.target.value})}
-                          placeholder="0.00"
                           className={inputClass}
                           style={{ ...inputStyle, paddingLeft: '24px' }}
+                          required
                         />
                       </div>
                     </div>
@@ -314,7 +323,6 @@ export default function AddProduct() {
                         type="number"
                         value={form.stock}
                         onChange={e => setForm({...form, stock: e.target.value})}
-                        placeholder="0"
                         className={inputClass}
                         style={inputStyle}
                       />
@@ -335,12 +343,12 @@ export default function AddProduct() {
                     </div>
                   </div>
                   <div>
-                    <label className={labelClass}>Net quantity <span className="text-[#71717a] font-normal">(e.g. 500 for 500g)</span></label>
+                    <label className={labelClass}>Net quantity</label>
                     <input
                       type="number"
                       value={form.netQuantity}
                       onChange={e => setForm({...form, netQuantity: e.target.value})}
-                      placeholder="500"
+                      placeholder="e.g. 500 for 500g"
                       className={inputClass}
                       style={inputStyle}
                     />
@@ -352,7 +360,7 @@ export default function AddProduct() {
                   <div className="text-[13px] font-semibold text-[#09090b] mb-4">GST compliance</div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className={labelClass}>HSN code <span className="text-[#71717a] font-normal">(required for GST)</span></label>
+                      <label className={labelClass}>HSN code</label>
                       <input
                         value={form.hsn}
                         onChange={e => setForm({...form, hsn: e.target.value})}
@@ -362,7 +370,7 @@ export default function AddProduct() {
                       />
                     </div>
                     <div>
-                      <label className={labelClass}>EAN / Barcode <span className="text-[#71717a] font-normal">(optional)</span></label>
+                      <label className={labelClass}>EAN / Barcode</label>
                       <input
                         value={form.ean}
                         onChange={e => setForm({...form, ean: e.target.value})}
@@ -374,16 +382,9 @@ export default function AddProduct() {
                   </div>
                 </div>
 
-                {/* Required fields reminder */}
-                {!isValid && (
-                  <div className="text-[12px] text-[#71717a] px-1 mb-4">
-                    <span className="text-[#ef4444]">*</span> Product name and selling price are required
-                  </div>
-                )}
-
-                {createMutation.isError && (
+                {updateMutation.isError && (
                   <div className="text-[13px] text-[#ef4444] bg-[#fef2f2] px-4 py-3 rounded-lg mb-4" style={{ border: '1px solid #fecaca' }}>
-                    {createMutation.error?.response?.data?.error || 'Something went wrong'}
+                    {updateMutation.error?.response?.data?.error || 'Something went wrong'}
                   </div>
                 )}
               </div>

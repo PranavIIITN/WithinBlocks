@@ -1,7 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { Search, Plus, Trash2, ChevronDown } from 'lucide-react'
 import api from '../services/api'
+
+const PAYMENT_TERMS = [
+  { label: 'Due on Receipt', days: 0 },
+  { label: 'Net 15', days: 15 },
+  { label: 'Net 30', days: 30 },
+  { label: 'Net 45', days: 45 },
+  { label: 'Net 60', days: 60 },
+  { label: 'Custom', days: null },
+]
 
 export default function CreateInvoice() {
   const navigate = useNavigate()
@@ -10,13 +20,19 @@ export default function CreateInvoice() {
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
   const [showProductDropdown, setShowProductDropdown] = useState(false)
+  const [showTermsDropdown, setShowTermsDropdown] = useState(false)
   const [items, setItems] = useState([])
+  const [paymentTerm, setPaymentTerm] = useState(PAYMENT_TERMS[0])
   const [form, setForm] = useState({
     invoiceNo: '',
-    dueDate: '',
-    notes: '',
-    status: 'UNPAID',
+    invoiceDate: new Date().toISOString().split('T')[0],
+    dueDate: new Date().toISOString().split('T')[0],
+    notes: 'Thanks for your business.',
+    termsAndConditions: '',
   })
+
+  const customerRef = useRef(null)
+  const productRef = useRef(null)
 
   // Search customers
   const { data: customerResults = [] } = useQuery({
@@ -34,59 +50,75 @@ export default function CreateInvoice() {
 
   const createMutation = useMutation({
     mutationFn: (data) => api.post('/invoices', data),
-    onSuccess: () => navigate('/invoices'),
+    onSuccess: (res) => navigate(`/invoices/${res.data.data.id}`),
   })
 
-  // Add product to items
+  // Update due date when payment term changes
+  useEffect(() => {
+    if (paymentTerm.days !== null) {
+      const date = new Date(form.invoiceDate)
+      date.setDate(date.getDate() + paymentTerm.days)
+      setForm(f => ({ ...f, dueDate: date.toISOString().split('T')[0] }))
+    }
+  }, [paymentTerm, form.invoiceDate])
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (customerRef.current && !customerRef.current.contains(e.target)) {
+        setShowCustomerDropdown(false)
+      }
+      if (productRef.current && !productRef.current.contains(e.target)) {
+        setShowProductDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
   const addProduct = (product) => {
     const existing = items.find(i => i.productId === product.id)
     if (existing) {
       setItems(items.map(i =>
-        i.productId === product.id
-          ? { ...i, quantity: i.quantity + 1 }
-          : i
+        i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i
       ))
     } else {
       setItems([...items, {
         productId: product.id,
         name: product.name,
+        image: product.image,
+        hsn: product.hsn,
         quantity: 1,
         unitPrice: product.price,
         tax: product.tax || 0,
-        priceType: product.priceType,
+        discount: 0,
       }])
     }
     setProductSearch('')
     setShowProductDropdown(false)
   }
 
-  const removeItem = (productId) => {
-    setItems(items.filter(i => i.productId !== productId))
-  }
+  const removeItem = (productId) => setItems(items.filter(i => i.productId !== productId))
 
   const updateItem = (productId, field, value) => {
-    setItems(items.map(i =>
-      i.productId === productId ? { ...i, [field]: value } : i
-    ))
+    setItems(items.map(i => i.productId === productId ? { ...i, [field]: value } : i))
   }
 
-  // Calculate totals
-  const calculateItemTotal = (item) => {
+  const getItemAmount = (item) => {
     const subtotal = item.quantity * item.unitPrice
-    const taxAmount = (subtotal * item.tax) / 100
-    return { subtotal, taxAmount, total: subtotal + taxAmount }
+    const discountAmount = (subtotal * item.discount) / 100
+    return subtotal - discountAmount
   }
 
-  const totals = items.reduce((acc, item) => {
-    const { subtotal, taxAmount, total } = calculateItemTotal(item)
-    return {
-      subtotal: acc.subtotal + subtotal,
-      tax: acc.tax + taxAmount,
-      total: acc.total + total,
-    }
-  }, { subtotal: 0, tax: 0, total: 0 })
+  const subtotal = items.reduce((sum, item) => sum + getItemAmount(item), 0)
+  const taxAmount = items.reduce((sum, item) => {
+    const amount = getItemAmount(item)
+    return sum + (amount * item.tax) / 100
+  }, 0)
+  const total = subtotal + taxAmount
+  const totalQty = items.reduce((sum, item) => sum + Number(item.quantity), 0)
 
-  const handleSubmit = (status) => {
+  const handleSave = (status) => {
     if (!selectedCustomer) return alert('Please select a customer')
     if (items.length === 0) return alert('Please add at least one item')
 
@@ -105,248 +137,403 @@ export default function CreateInvoice() {
     })
   }
 
+  const inputStyle = {
+    border: '1px solid #e4e4e7',
+    background: '#fff',
+    borderRadius: '6px',
+    padding: '8px 12px',
+    fontSize: '13px',
+    color: '#09090b',
+    outline: 'none',
+    width: '100%',
+  }
+
+  const labelStyle = {
+    fontSize: '12px',
+    fontWeight: '500',
+    color: '#ef4444',
+    marginBottom: '6px',
+    display: 'block',
+  }
+
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden bg-white">
       {/* Topbar */}
-      <div className="flex items-center justify-between px-6 h-[52px] border-b border-[#d1d0c9] bg-white flex-shrink-0">
+      <div className="flex items-center justify-between px-6 h-[56px] bg-white flex-shrink-0" style={{ borderBottom: '1px solid #e4e4e7' }}>
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/invoices')} className="text-[13px] text-[#5f5e5a] cursor-pointer hover:text-[#1a1a18]">
-            ← Invoices
-          </button>
-          <span className="text-[#d1d0c9]">·</span>
-          <div className="text-[14px] font-medium text-[#1a1a18]">New invoice</div>
+          <div className="text-[16px] font-semibold text-[#09090b] flex items-center gap-2">
+            <span>📄</span> New Invoice
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleSubmit('DRAFT')}
-            disabled={createMutation.isPending}
-            className="px-3 py-1.5 rounded-lg border border-[#b4b2a9] bg-white text-[#1a1a18] text-[13px] cursor-pointer"
-          >
-            Save as draft
-          </button>
-          <button
-            onClick={() => handleSubmit('UNPAID')}
-            disabled={createMutation.isPending}
-            className="px-3 py-1.5 rounded-lg bg-[#185FA5] text-white text-[13px] font-medium cursor-pointer disabled:opacity-50"
-          >
-            {createMutation.isPending ? 'Creating...' : 'Create invoice'}
-          </button>
-        </div>
+        <button onClick={() => navigate('/invoices')} className="text-[#71717a] hover:text-[#09090b] cursor-pointer text-[20px]">✕</button>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-3xl mx-auto flex flex-col gap-5">
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-5xl mx-auto p-6">
 
-          {/* Invoice details */}
-          <div className="bg-white border border-[#d1d0c9] rounded-lg p-5">
-            <div className="text-[13px] font-medium text-[#1a1a18] mb-4">Invoice details</div>
-            <div className="grid grid-cols-3 gap-4">
+          {/* Customer + Invoice details */}
+          <div className="grid grid-cols-2 gap-6 mb-6">
+
+            {/* Customer */}
+            <div>
+              <label style={labelStyle}>Customer Name *</label>
+              <div ref={customerRef} className="relative">
+                {selectedCustomer ? (
+                  <div
+                    className="flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer"
+                    style={{ border: '1px solid #e4e4e7' }}
+                    onClick={() => setSelectedCustomer(null)}
+                  >
+                    <div>
+                      <div className="text-[13px] font-medium text-[#09090b]">{selectedCustomer.name}</div>
+                      {selectedCustomer.gstin && <div className="text-[11px] text-[#71717a]">GSTIN: {selectedCustomer.gstin}</div>}
+                    </div>
+                    <ChevronDown size={14} className="text-[#71717a]" />
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        style={inputStyle}
+                        placeholder="Select or add a customer"
+                        value={customerSearch}
+                        onChange={e => { setCustomerSearch(e.target.value); setShowCustomerDropdown(true) }}
+                        onFocus={() => setShowCustomerDropdown(true)}
+                      />
+                      {showCustomerDropdown && customerResults.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-lg z-20 mt-1 overflow-hidden" style={{ border: '1px solid #e4e4e7' }}>
+                          {customerResults.map(c => (
+                            <div
+                              key={c.id}
+                              onClick={() => { setSelectedCustomer(c); setShowCustomerDropdown(false); setCustomerSearch('') }}
+                              className="px-4 py-3 hover:bg-[#f4f4f5] cursor-pointer"
+                              style={{ borderBottom: '1px solid #f4f4f5' }}
+                            >
+                              <div className="text-[13px] font-medium text-[#09090b]">{c.name}</div>
+                              <div className="text-[11px] text-[#71717a]">{c.phone} {c.gstin && `· GSTIN: ${c.gstin}`}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <button className="px-3 py-2 rounded-lg text-white text-[13px] cursor-pointer" style={{ background: '#2563eb' }}>
+                      <Search size={14} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Invoice details */}
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[12px] font-medium text-[#1a1a18] mb-1.5">Invoice no. <span className="text-[#888780] font-normal">(auto if empty)</span></label>
+                <label style={{ ...labelStyle, color: '#ef4444' }}>Invoice # *</label>
                 <input
+                  style={inputStyle}
+                  placeholder="INV-000001"
                   value={form.invoiceNo}
-                  onChange={e => setForm({...form, invoiceNo: e.target.value})}
-                  placeholder="INV-2526-003"
-                  className="w-full px-3 py-2 rounded-lg border border-[#b4b2a9] bg-[#fafaf8] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]"
+                  onChange={e => setForm({ ...form, invoiceNo: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-[12px] font-medium text-[#1a1a18] mb-1.5">Due date</label>
+                <label style={{ ...labelStyle, color: '#52525b' }}>Invoice Date *</label>
                 <input
                   type="date"
-                  value={form.dueDate}
-                  onChange={e => setForm({...form, dueDate: e.target.value})}
-                  className="w-full px-3 py-2 rounded-lg border border-[#b4b2a9] bg-[#fafaf8] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]"
+                  style={inputStyle}
+                  value={form.invoiceDate}
+                  onChange={e => setForm({ ...form, invoiceDate: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-[12px] font-medium text-[#1a1a18] mb-1.5">Notes</label>
+                <label style={{ ...labelStyle, color: '#52525b' }}>Terms</label>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowTermsDropdown(!showTermsDropdown)}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] text-[#09090b]"
+                    style={{ border: '1px solid #e4e4e7' }}
+                  >
+                    {paymentTerm.label}
+                    <ChevronDown size={14} className="text-[#71717a]" />
+                  </button>
+                  {showTermsDropdown && (
+                    <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-lg z-20 mt-1 overflow-hidden" style={{ border: '1px solid #e4e4e7' }}>
+                      {PAYMENT_TERMS.map(term => (
+                        <div
+                          key={term.label}
+                          onClick={() => { setPaymentTerm(term); setShowTermsDropdown(false) }}
+                          className="px-4 py-2.5 hover:bg-[#f4f4f5] cursor-pointer text-[13px] text-[#09090b]"
+                        >
+                          {term.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label style={{ ...labelStyle, color: '#52525b' }}>Due Date</label>
                 <input
-                  value={form.notes}
-                  onChange={e => setForm({...form, notes: e.target.value})}
-                  placeholder="Payment terms, remarks..."
-                  className="w-full px-3 py-2 rounded-lg border border-[#b4b2a9] bg-[#fafaf8] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]"
+                  type="date"
+                  style={inputStyle}
+                  value={form.dueDate}
+                  onChange={e => setForm({ ...form, dueDate: e.target.value })}
                 />
               </div>
             </div>
           </div>
 
-          {/* Customer */}
-          <div className="bg-white border border-[#d1d0c9] rounded-lg p-5">
-            <div className="text-[13px] font-medium text-[#1a1a18] mb-4">Bill to</div>
-            {selectedCustomer ? (
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-[14px] font-medium text-[#1a1a18]">{selectedCustomer.name}</div>
-                  <div className="text-[13px] text-[#5f5e5a] mt-1">{selectedCustomer.email}</div>
-                  <div className="text-[13px] text-[#5f5e5a]">{selectedCustomer.phone}</div>
-                  <div className="text-[13px] text-[#5f5e5a]">{selectedCustomer.address}</div>
-                  {selectedCustomer.gstin && (
-                    <div className="mt-2 inline-flex items-center bg-[#f5f5f3] border border-[#d1d0c9] rounded px-2 py-1 text-[11px] font-mono text-[#444441]">
-                      GSTIN {selectedCustomer.gstin}
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => setSelectedCustomer(null)}
-                  className="text-[12px] text-[#185FA5] cursor-pointer"
-                >
-                  Change
+          {/* Items Table */}
+          <div className="mb-4" style={{ border: '1px solid #e4e4e7', borderRadius: '8px', overflow: 'hidden' }}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #e4e4e7' }}>
+              <div className="text-[13px] font-semibold text-[#09090b]">Item Table</div>
+              <div className="flex items-center gap-3">
+                <button className="flex items-center gap-1.5 text-[12px] text-[#2563eb] cursor-pointer">
+                  📷 Scan Item
                 </button>
               </div>
-            ) : (
-              <div className="relative">
-                <div className="flex items-center gap-2 border border-[#b4b2a9] rounded-lg px-3 py-2 bg-[#fafaf8]">
-                  <span className="text-[#888780]">🔍</span>
+            </div>
+
+            {/* Table Header */}
+            <div className="grid text-[11px] font-semibold text-[#71717a] uppercase tracking-wide px-4 py-2 bg-[#fafafa]" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', gap: '12px', borderBottom: '1px solid #e4e4e7' }}>
+              <div>Item Details</div>
+              <div className="text-right">Quantity</div>
+              <div className="text-right">Rate</div>
+              <div className="text-right">Discount</div>
+              <div className="text-right">Tax</div>
+              <div className="text-right">Amount</div>
+            </div>
+
+            {/* Items */}
+            {items.map((item, index) => (
+              <div
+                key={item.productId}
+                className="grid px-4 py-3 items-center"
+                style={{
+                  gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto',
+                  gap: '12px',
+                  borderBottom: '1px solid #f4f4f5',
+                  background: index % 2 === 0 ? '#fff' : '#fafafa'
+                }}
+              >
+                {/* Item details */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0" style={{ border: '1px solid #e4e4e7', background: '#f4f4f5' }}>
+                    {item.image ? (
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[#a1a1aa] text-[18px]">📦</div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-[13px] font-medium text-[#09090b]">{item.name}</div>
+                    {item.hsn && <div className="text-[11px] text-[#71717a]">HSN: {item.hsn}</div>}
+                  </div>
+                </div>
+
+                {/* Quantity */}
+                <div className="flex justify-end">
                   <input
-                    type="text"
-                    placeholder="Search customer by name or phone..."
-                    value={customerSearch}
-                    onChange={e => { setCustomerSearch(e.target.value); setShowCustomerDropdown(true) }}
-                    className="flex-1 text-[13px] text-[#1a1a18] outline-none bg-transparent placeholder-[#b4b2a9]"
+                    type="number"
+                    value={item.quantity}
+                    onChange={e => updateItem(item.productId, 'quantity', e.target.value)}
+                    className="text-right w-20 px-2 py-1 rounded text-[13px] outline-none"
+                    style={{ border: '1px solid #e4e4e7' }}
+                    min="1"
                   />
                 </div>
-                {showCustomerDropdown && customerResults.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 bg-white border border-[#d1d0c9] rounded-lg mt-1 z-10 shadow-sm overflow-hidden">
-                    {customerResults.map(c => (
-                      <div
-                        key={c.id}
-                        onClick={() => { setSelectedCustomer(c); setShowCustomerDropdown(false); setCustomerSearch('') }}
-                        className="px-4 py-3 hover:bg-[#f5f5f3] cursor-pointer border-b border-[#e8e7e0] last:border-0"
-                      >
-                        <div className="text-[13px] font-medium text-[#1a1a18]">{c.name}</div>
-                        <div className="text-[11px] text-[#888780]">{c.phone} {c.gstin && `· ${c.gstin}`}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
 
-          {/* Items */}
-          <div className="bg-white border border-[#d1d0c9] rounded-lg p-5">
-            <div className="text-[13px] font-medium text-[#1a1a18] mb-4">Items</div>
-
-            {items.length > 0 && (
-              <div className="mb-4">
-                <div className="grid grid-cols-12 gap-2 px-2 mb-2">
-                  {['Product', 'Qty', 'Rate', 'Tax %', 'Total', ''].map((h, i) => (
-                    <div key={i} className={`text-[11px] font-medium text-[#5f5e5a] ${i === 0 ? 'col-span-4' : i === 4 ? 'col-span-2 text-right' : i === 5 ? 'col-span-1' : 'col-span-1'}`}>
-                      {h}
-                    </div>
-                  ))}
+                {/* Rate */}
+                <div className="flex justify-end">
+                  <input
+                    type="number"
+                    value={item.unitPrice}
+                    onChange={e => updateItem(item.productId, 'unitPrice', e.target.value)}
+                    className="text-right w-24 px-2 py-1 rounded text-[13px] outline-none"
+                    style={{ border: '1px solid #e4e4e7' }}
+                  />
                 </div>
-                {items.map((item) => {
-                  const { total } = calculateItemTotal(item)
-                  return (
-                    <div key={item.productId} className="grid grid-cols-12 gap-2 items-center py-2 border-t border-[#e8e7e0]">
-                      <div className="col-span-4 text-[13px] text-[#1a1a18] font-medium">{item.name}</div>
-                      <div className="col-span-1">
-                        <input
-                          type="number"
-                          value={item.quantity}
-                          onChange={e => updateItem(item.productId, 'quantity', e.target.value)}
-                          className="w-full px-2 py-1 rounded border border-[#b4b2a9] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5] text-center"
-                          min="1"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <input
-                          type="number"
-                          value={item.unitPrice}
-                          onChange={e => updateItem(item.productId, 'unitPrice', e.target.value)}
-                          className="w-full px-2 py-1 rounded border border-[#b4b2a9] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <input
-                          type="number"
-                          value={item.tax}
-                          onChange={e => updateItem(item.productId, 'tax', e.target.value)}
-                          className="w-full px-2 py-1 rounded border border-[#b4b2a9] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]"
-                        />
-                      </div>
-                      <div className="col-span-2 text-right text-[13px] font-medium text-[#1a1a18]">
-                        ₹{total.toFixed(2)}
-                      </div>
-                      <div className="col-span-1 text-right">
-                        <button
-                          onClick={() => removeItem(item.productId)}
-                          className="text-[#888780] hover:text-[#791F1F] cursor-pointer text-[13px]"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
 
-            {/* Add product search */}
-            <div className="relative">
-              <div className="flex items-center gap-2 border border-dashed border-[#b4b2a9] rounded-lg px-3 py-2 hover:border-[#185FA5] transition-colors">
-                <span className="text-[#888780]">+</span>
+                {/* Discount */}
+                <div className="flex justify-end items-center gap-1">
+                  <input
+                    type="number"
+                    value={item.discount}
+                    onChange={e => updateItem(item.productId, 'discount', e.target.value)}
+                    className="text-right w-16 px-2 py-1 rounded text-[13px] outline-none"
+                    style={{ border: '1px solid #e4e4e7' }}
+                    min="0"
+                    max="100"
+                  />
+                  <span className="text-[12px] text-[#71717a]">%</span>
+                </div>
+
+                {/* Tax */}
+                <div className="flex justify-end">
+                  <select
+                    value={item.tax}
+                    onChange={e => updateItem(item.productId, 'tax', e.target.value)}
+                    className="text-right px-2 py-1 rounded text-[13px] outline-none"
+                    style={{ border: '1px solid #e4e4e7' }}
+                  >
+                    {[0, 5, 12, 18, 28].map(r => (
+                      <option key={r} value={r}>{r}%</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Amount + Delete */}
+                <div className="flex items-center justify-end gap-2">
+                  <span className="text-[13px] font-medium text-[#09090b] w-20 text-right">
+                    ₹{getItemAmount(item).toFixed(2)}
+                  </span>
+                  <button
+                    onClick={() => removeItem(item.productId)}
+                    className="text-[#a1a1aa] hover:text-[#ef4444] cursor-pointer"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {/* Add item row */}
+            <div ref={productRef} className="px-4 py-3 relative" style={{ borderBottom: '1px solid #e4e4e7' }}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ border: '1px dashed #d1d5db', background: '#fafafa' }}>
+                  <span className="text-[#a1a1aa] text-[18px]">📦</span>
+                </div>
                 <input
-                  type="text"
-                  placeholder="Add product by name or scan barcode..."
+                  style={{ ...inputStyle, border: 'none', background: 'transparent', padding: '0' }}
+                  placeholder="Type or click to select an item."
                   value={productSearch}
                   onChange={e => { setProductSearch(e.target.value); setShowProductDropdown(true) }}
-                  className="flex-1 text-[13px] text-[#1a1a18] outline-none bg-transparent placeholder-[#888780]"
+                  onFocus={() => setShowProductDropdown(true)}
                 />
               </div>
               {showProductDropdown && productResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 bg-white border border-[#d1d0c9] rounded-lg mt-1 z-10 shadow-sm overflow-hidden">
+                <div className="absolute top-full left-4 right-4 bg-white rounded-lg shadow-lg z-20 mt-1 overflow-hidden" style={{ border: '1px solid #e4e4e7' }}>
                   {productResults.map(p => (
                     <div
                       key={p.id}
                       onClick={() => addProduct(p)}
-                      className="px-4 py-3 hover:bg-[#f5f5f3] cursor-pointer border-b border-[#e8e7e0] last:border-0"
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-[#f4f4f5] cursor-pointer"
+                      style={{ borderBottom: '1px solid #f4f4f5' }}
                     >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-[13px] font-medium text-[#1a1a18]">{p.name}</div>
-                          <div className="text-[11px] text-[#888780]">Stock: {p.stock} · Tax: {p.tax}%</div>
-                        </div>
-                        <div className="text-[13px] font-medium text-[#1a1a18]">₹{p.price}</div>
+                      <div className="w-8 h-8 rounded overflow-hidden flex-shrink-0" style={{ border: '1px solid #e4e4e7' }}>
+                        {p.image ? (
+                          <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-[#f4f4f5] flex items-center justify-center text-[12px]">📦</div>
+                        )}
                       </div>
+                      <div className="flex-1">
+                        <div className="text-[13px] font-medium text-[#09090b]">{p.name}</div>
+                        <div className="text-[11px] text-[#71717a]">Stock: {p.stock} · ₹{p.price} · Tax: {p.tax}%</div>
+                      </div>
+                      <div className="text-[13px] font-medium text-[#09090b]">₹{p.price}</div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
+
+            {/* Add New Row button */}
+            <div className="px-4 py-2 flex items-center gap-4">
+              <button className="flex items-center gap-1.5 text-[12px] text-[#2563eb] cursor-pointer hover:underline">
+                <Plus size={13} />
+                Add New Row
+              </button>
+            </div>
           </div>
 
-          {/* Totals */}
-          {items.length > 0 && (
-            <div className="bg-white border border-[#d1d0c9] rounded-lg p-5">
-              <div className="flex justify-end">
-                <div className="w-64 flex flex-col gap-2">
-                  <div className="flex justify-between text-[13px]">
-                    <span className="text-[#5f5e5a]">Subtotal</span>
-                    <span className="text-[#1a1a18]">₹{totals.subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-[13px]">
-                    <span className="text-[#5f5e5a]">Tax</span>
-                    <span className="text-[#1a1a18]">₹{totals.tax.toFixed(2)}</span>
-                  </div>
-                  <div className="h-px bg-[#d1d0c9] my-1"></div>
-                  <div className="flex justify-between text-[14px] font-medium">
-                    <span className="text-[#1a1a18]">Total</span>
-                    <span className="text-[#1a1a18]">₹{totals.total.toFixed(2)}</span>
-                  </div>
+          {/* Notes + Totals */}
+          <div className="grid grid-cols-2 gap-6 mb-6">
+
+            {/* Left — Notes & Terms */}
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="block text-[12px] font-medium text-[#09090b] mb-1.5">Customer Notes</label>
+                <textarea
+                  value={form.notes}
+                  onChange={e => setForm({ ...form, notes: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-lg text-[13px] text-[#09090b] outline-none resize-none"
+                  style={{ border: '1px solid #e4e4e7' }}
+                />
+                <div className="text-[11px] text-[#71717a] mt-1">Will be displayed on the invoice</div>
+              </div>
+              <div>
+                <label className="block text-[12px] font-medium text-[#09090b] mb-1.5">Terms & Conditions</label>
+                <textarea
+                  value={form.termsAndConditions}
+                  onChange={e => setForm({ ...form, termsAndConditions: e.target.value })}
+                  rows={3}
+                  placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
+                  className="w-full px-3 py-2 rounded-lg text-[13px] text-[#09090b] outline-none resize-none"
+                  style={{ border: '1px solid #e4e4e7' }}
+                />
+              </div>
+            </div>
+
+            {/* Right — Totals */}
+            <div>
+              <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #e4e4e7' }}>
+                <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
+                  <span className="font-semibold text-[#09090b]">Sub Total</span>
+                  <span className="font-semibold text-[#09090b]">₹{subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
+                  <span className="text-[#71717a]">Tax</span>
+                  <span className="text-[#09090b]">₹{taxAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between px-4 py-3">
+                  <span className="text-[14px] font-bold text-[#09090b]">Total (₹)</span>
+                  <span className="text-[14px] font-bold text-[#09090b]">₹{total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
-          )}
+          </div>
 
+          {/* Error */}
           {createMutation.isError && (
-            <div className="text-[12px] text-[#791F1F] bg-[#FCEBEB] px-4 py-3 rounded-lg">
+            <div className="text-[13px] text-[#ef4444] bg-[#fef2f2] px-4 py-3 rounded-lg mb-4" style={{ border: '1px solid #fecaca' }}>
               {createMutation.error?.response?.data?.error || 'Something went wrong'}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Bottom action bar — like Zoho */}
+      <div className="flex items-center justify-between px-6 py-4 bg-white flex-shrink-0" style={{ borderTop: '1px solid #e4e4e7' }}>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => handleSave('DRAFT')}
+            disabled={createMutation.isPending}
+            className="px-4 py-2 rounded-lg text-[13px] text-[#09090b] cursor-pointer disabled:opacity-50"
+            style={{ border: '1px solid #e4e4e7' }}
+          >
+            Save as Draft
+          </button>
+          <button
+            onClick={() => handleSave('UNPAID')}
+            disabled={createMutation.isPending}
+            className="px-4 py-2 rounded-lg text-[13px] font-medium text-white cursor-pointer disabled:opacity-50"
+            style={{ background: '#2563eb' }}
+          >
+            {createMutation.isPending ? 'Saving...' : 'Save and Send'}
+          </button>
+          <button
+            onClick={() => navigate('/invoices')}
+            className="px-4 py-2 text-[13px] text-[#71717a] cursor-pointer hover:text-[#09090b]"
+          >
+            Cancel
+          </button>
+        </div>
+        <div className="text-[13px] text-[#71717a]">
+          Total Amount: <span className="font-semibold text-[#09090b]">₹{total.toFixed(2)}</span>
+          <span className="mx-3">·</span>
+          Total Quantity: <span className="font-semibold text-[#09090b]">{totalQty}</span>
         </div>
       </div>
     </div>
