@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../services/api'
 
 export default function Invoices() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
@@ -119,7 +121,11 @@ export default function Invoices() {
                 <tr><td colSpan={7} className="px-4 py-8 text-center text-[13px] text-[#888780]">No invoices found</td></tr>
               ) : (
                 filtered.map((invoice) => (
-                  <tr key={invoice.id} className="hover:bg-[#fafaf8] border-b border-[#e8e7e0] last:border-0">
+                  <tr
+                    key={invoice.id}
+                    onClick={() => navigate(`/invoices/${invoice.id}`)}
+                    className="hover:bg-[#fafaf8] border-b border-[#e8e7e0] last:border-0 cursor-pointer"
+                  >
                     <td className="px-4 py-3 font-medium text-[#1a1a18]">{invoice.invoiceNo}</td>
                     <td className="px-4 py-3 text-[#1a1a18]">{invoice.customer?.name}</td>
                     <td className="px-4 py-3 text-[#5f5e5a]">
@@ -134,7 +140,7 @@ export default function Invoices() {
                     <td className="px-4 py-3">
                       <span className={statusBadge(invoice.status)}>{invoice.status}</span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
                         {invoice.status === 'UNPAID' && (
                           <button

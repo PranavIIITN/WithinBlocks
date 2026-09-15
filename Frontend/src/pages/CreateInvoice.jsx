@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Search, Plus, Trash2, ChevronDown } from 'lucide-react'
 import api from '../services/api'
+import useAuthStore from '../store/authStore'
 
 const PAYMENT_TERMS = [
   { label: 'Due on Receipt', days: 0 },
@@ -13,8 +14,12 @@ const PAYMENT_TERMS = [
   { label: 'Custom', days: null },
 ]
 
+// HSN | Item | Qty | Rate | Total | Tax% | CGST | SGST | IGST | Taxable Value | delete
+const ITEM_GRID_COLS = '70px 1.8fr 60px 90px 90px 55px 75px 75px 75px 100px 24px'
+
 export default function CreateInvoice() {
   const navigate = useNavigate()
+  const { company } = useAuthStore()
   const [customerSearch, setCustomerSearch] = useState('')
   const [productSearch, setProductSearch] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState(null)
@@ -91,7 +96,7 @@ export default function CreateInvoice() {
         quantity: 1,
         unitPrice: product.price,
         tax: product.tax || 0,
-        discount: 0,
+        priceType: product.priceType || 'EXCLUSIVE',
       }])
     }
     setProductSearch('')
@@ -104,17 +109,41 @@ export default function CreateInvoice() {
     setItems(items.map(i => i.productId === productId ? { ...i, [field]: value } : i))
   }
 
-  const getItemAmount = (item) => {
-    const subtotal = item.quantity * item.unitPrice
-    const discountAmount = (subtotal * item.discount) / 100
-    return subtotal - discountAmount
+  // Determine intra vs inter state — mirrors Backend/src/modules/invoice/invoice.service.js
+  const sellerStateCode = company?.gstin?.substring(0, 2)
+  const customerStateCode = selectedCustomer?.gstin?.substring(0, 2)
+  const isInterState = sellerStateCode && customerStateCode
+    ? sellerStateCode !== customerStateCode
+    : false
+
+  // Mirrors the backend's calculateTax() helper exactly, so the preview
+  // shown here matches what actually gets persisted on save.
+  const calculateItemTax = (item) => {
+    const price = Number(item.unitPrice) * Number(item.quantity)
+    const taxRate = Number(item.tax) || 0
+    let itemSubtotal, taxAmount
+
+    if (item.priceType === 'INCLUSIVE') {
+      itemSubtotal = (price * 100) / (100 + taxRate)
+      taxAmount = price - itemSubtotal
+    } else {
+      itemSubtotal = price
+      taxAmount = (itemSubtotal * taxRate) / 100
+    }
+
+    const cgst = isInterState ? 0 : taxAmount / 2
+    const sgst = isInterState ? 0 : taxAmount / 2
+    const igst = isInterState ? taxAmount : 0
+
+    return { subtotal: itemSubtotal, taxAmount, cgst, sgst, igst, total: itemSubtotal + taxAmount }
   }
 
-  const subtotal = items.reduce((sum, item) => sum + getItemAmount(item), 0)
-  const taxAmount = items.reduce((sum, item) => {
-    const amount = getItemAmount(item)
-    return sum + (amount * item.tax) / 100
-  }, 0)
+  const itemTaxes = items.map(item => calculateItemTax(item))
+  const subtotal = itemTaxes.reduce((sum, t) => sum + t.subtotal, 0)
+  const totalCgst = itemTaxes.reduce((sum, t) => sum + t.cgst, 0)
+  const totalSgst = itemTaxes.reduce((sum, t) => sum + t.sgst, 0)
+  const totalIgst = itemTaxes.reduce((sum, t) => sum + t.igst, 0)
+  const taxAmount = totalCgst + totalSgst + totalIgst
   const total = subtotal + taxAmount
   const totalQty = items.reduce((sum, item) => sum + Number(item.quantity), 0)
 
@@ -202,7 +231,10 @@ export default function CreateInvoice() {
                         onFocus={() => setShowCustomerDropdown(true)}
                       />
                       {showCustomerDropdown && customerResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-lg z-20 mt-1 overflow-hidden" style={{ border: '1px solid #e4e4e7' }}>
+                        <div
+                          className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-lg z-20 mt-1 overflow-y-auto"
+                          style={{ border: '1px solid #e4e4e7', maxHeight: '280px' }}
+                        >
                           {customerResults.map(c => (
                             <div
                               key={c.id}
@@ -284,7 +316,7 @@ export default function CreateInvoice() {
           </div>
 
           {/* Items Table */}
-          <div className="mb-4" style={{ border: '1px solid #e4e4e7', borderRadius: '8px', overflow: 'hidden' }}>
+          <div className="mb-4" style={{ border: '1px solid #e4e4e7', borderRadius: '8px' }}>
             <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #e4e4e7' }}>
               <div className="text-[13px] font-semibold text-[#09090b]">Item Table</div>
               <div className="flex items-center gap-3">
@@ -295,41 +327,39 @@ export default function CreateInvoice() {
             </div>
 
             {/* Table Header */}
-            <div className="grid text-[11px] font-semibold text-[#71717a] uppercase tracking-wide px-4 py-2 bg-[#fafafa]" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', gap: '12px', borderBottom: '1px solid #e4e4e7' }}>
-              <div>Item Details</div>
-              <div className="text-right">Quantity</div>
+            <div className="grid text-[11px] font-semibold text-[#71717a] uppercase tracking-wide px-4 py-2 bg-[#fafafa]" style={{ gridTemplateColumns: ITEM_GRID_COLS, gap: '8px', borderBottom: '1px solid #e4e4e7' }}>
+              <div>HSN Code</div>
+              <div>Item</div>
+              <div className="text-right">Qty</div>
               <div className="text-right">Rate</div>
-              <div className="text-right">Discount</div>
-              <div className="text-right">Tax</div>
-              <div className="text-right">Amount</div>
+              <div className="text-right">Total</div>
+              <div className="text-right">Tax %</div>
+              <div className="text-right">CGST</div>
+              <div className="text-right">SGST</div>
+              <div className="text-right">IGST</div>
+              <div className="text-right">Taxable Value</div>
+              <div></div>
             </div>
 
             {/* Items */}
-            {items.map((item, index) => (
+            {items.map((item, index) => {
+              const itemTax = calculateItemTax(item)
+              return (
               <div
                 key={item.productId}
                 className="grid px-4 py-3 items-center"
                 style={{
-                  gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto',
-                  gap: '12px',
+                  gridTemplateColumns: ITEM_GRID_COLS,
+                  gap: '8px',
                   borderBottom: '1px solid #f4f4f5',
                   background: index % 2 === 0 ? '#fff' : '#fafafa'
                 }}
               >
-                {/* Item details */}
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0" style={{ border: '1px solid #e4e4e7', background: '#f4f4f5' }}>
-                    {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[#a1a1aa] text-[18px]">📦</div>
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-[13px] font-medium text-[#09090b]">{item.name}</div>
-                    {item.hsn && <div className="text-[11px] text-[#71717a]">HSN: {item.hsn}</div>}
-                  </div>
-                </div>
+                {/* HSN */}
+                <div className="text-[12px] text-[#52525b]">{item.hsn || '—'}</div>
+
+                {/* Item name */}
+                <div className="text-[13px] font-medium text-[#09090b] truncate" title={item.name}>{item.name}</div>
 
                 {/* Quantity */}
                 <div className="flex justify-end">
@@ -337,7 +367,7 @@ export default function CreateInvoice() {
                     type="number"
                     value={item.quantity}
                     onChange={e => updateItem(item.productId, 'quantity', e.target.value)}
-                    className="text-right w-20 px-2 py-1 rounded text-[13px] outline-none"
+                    className="text-right w-16 px-2 py-1 rounded text-[13px] outline-none"
                     style={{ border: '1px solid #e4e4e7' }}
                     min="1"
                   />
@@ -349,31 +379,20 @@ export default function CreateInvoice() {
                     type="number"
                     value={item.unitPrice}
                     onChange={e => updateItem(item.productId, 'unitPrice', e.target.value)}
-                    className="text-right w-24 px-2 py-1 rounded text-[13px] outline-none"
+                    className="text-right w-20 px-2 py-1 rounded text-[13px] outline-none"
                     style={{ border: '1px solid #e4e4e7' }}
                   />
                 </div>
 
-                {/* Discount */}
-                <div className="flex justify-end items-center gap-1">
-                  <input
-                    type="number"
-                    value={item.discount}
-                    onChange={e => updateItem(item.productId, 'discount', e.target.value)}
-                    className="text-right w-16 px-2 py-1 rounded text-[13px] outline-none"
-                    style={{ border: '1px solid #e4e4e7' }}
-                    min="0"
-                    max="100"
-                  />
-                  <span className="text-[12px] text-[#71717a]">%</span>
-                </div>
+                {/* Total (pre-tax) */}
+                <div className="text-right text-[13px] text-[#52525b]">₹{itemTax.subtotal.toFixed(2)}</div>
 
-                {/* Tax */}
+                {/* Tax % */}
                 <div className="flex justify-end">
                   <select
                     value={item.tax}
                     onChange={e => updateItem(item.productId, 'tax', e.target.value)}
-                    className="text-right px-2 py-1 rounded text-[13px] outline-none"
+                    className="text-right px-1 py-1 rounded text-[12px] outline-none"
                     style={{ border: '1px solid #e4e4e7' }}
                   >
                     {[0, 5, 12, 18, 28].map(r => (
@@ -382,20 +401,36 @@ export default function CreateInvoice() {
                   </select>
                 </div>
 
-                {/* Amount + Delete */}
-                <div className="flex items-center justify-end gap-2">
-                  <span className="text-[13px] font-medium text-[#09090b] w-20 text-right">
-                    ₹{getItemAmount(item).toFixed(2)}
-                  </span>
-                  <button
-                    onClick={() => removeItem(item.productId)}
-                    className="text-[#a1a1aa] hover:text-[#ef4444] cursor-pointer"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                {/* CGST */}
+                <div className="text-right text-[12px] text-[#52525b]">
+                  {itemTax.cgst > 0 ? `₹${itemTax.cgst.toFixed(2)}` : '—'}
                 </div>
+
+                {/* SGST */}
+                <div className="text-right text-[12px] text-[#52525b]">
+                  {itemTax.sgst > 0 ? `₹${itemTax.sgst.toFixed(2)}` : '—'}
+                </div>
+
+                {/* IGST */}
+                <div className="text-right text-[12px] text-[#52525b]">
+                  {itemTax.igst > 0 ? `₹${itemTax.igst.toFixed(2)}` : '—'}
+                </div>
+
+                {/* Taxable Value (line total incl. tax) */}
+                <div className="text-right text-[13px] font-medium text-[#09090b]">
+                  ₹{itemTax.total.toFixed(2)}
+                </div>
+
+                {/* Delete */}
+                <button
+                  onClick={() => removeItem(item.productId)}
+                  className="text-[#a1a1aa] hover:text-[#ef4444] cursor-pointer flex justify-end"
+                >
+                  <Trash2 size={13} />
+                </button>
               </div>
-            ))}
+              )
+            })}
 
             {/* Add item row */}
             <div ref={productRef} className="px-4 py-3 relative" style={{ borderBottom: '1px solid #e4e4e7' }}>
@@ -412,7 +447,10 @@ export default function CreateInvoice() {
                 />
               </div>
               {showProductDropdown && productResults.length > 0 && (
-                <div className="absolute top-full left-4 right-4 bg-white rounded-lg shadow-lg z-20 mt-1 overflow-hidden" style={{ border: '1px solid #e4e4e7' }}>
+                <div
+                  className="absolute top-full left-4 right-4 bg-white rounded-lg shadow-lg z-20 mt-1 overflow-y-auto"
+                  style={{ border: '1px solid #e4e4e7', maxHeight: '280px' }}
+                >
                   {productResults.map(p => (
                     <div
                       key={p.id}
@@ -478,15 +516,35 @@ export default function CreateInvoice() {
 
             {/* Right — Totals */}
             <div>
+              {items.length > 0 && (
+                <div className="text-[11px] text-[#71717a] mb-1.5">
+                  {company?.gstin && selectedCustomer?.gstin
+                    ? (isInterState ? 'Inter-state transaction — IGST applies' : 'Intra-state transaction — CGST + SGST applies')
+                    : 'Add GSTIN for company/customer for an accurate tax split'}
+                </div>
+              )}
               <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #e4e4e7' }}>
                 <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
                   <span className="font-semibold text-[#09090b]">Sub Total</span>
                   <span className="font-semibold text-[#09090b]">₹{subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
-                  <span className="text-[#71717a]">Tax</span>
-                  <span className="text-[#09090b]">₹{taxAmount.toFixed(2)}</span>
-                </div>
+                {isInterState ? (
+                  <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
+                    <span className="text-[#71717a]">IGST</span>
+                    <span className="text-[#09090b]">₹{totalIgst.toFixed(2)}</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
+                      <span className="text-[#71717a]">CGST</span>
+                      <span className="text-[#09090b]">₹{totalCgst.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
+                      <span className="text-[#71717a]">SGST</span>
+                      <span className="text-[#09090b]">₹{totalSgst.toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between px-4 py-3">
                   <span className="text-[14px] font-bold text-[#09090b]">Total (₹)</span>
                   <span className="text-[14px] font-bold text-[#09090b]">₹{total.toFixed(2)}</span>

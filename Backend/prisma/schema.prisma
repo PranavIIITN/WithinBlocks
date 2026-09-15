@@ -13,6 +13,7 @@ model Company {
   phone     String?
   address   String?
   gstin     String?
+  state     String   @default("Uttar Pradesh")
   invoicePrefix  String  @default("INV")
   invoiceCounter Int     @default(1)
   financialYear  String  @default("2526")
@@ -80,6 +81,7 @@ model Customer {
   id        String   @id @default(uuid())
   name      String
   email     String?
+  state     String   @default("Uttar Pradesh")
   phone     String?
   address   String?
   gstin     String?
