@@ -10,6 +10,7 @@ import CreateInvoice from './pages/CreateInvoice'
 import AddProduct from './pages/AddProduct'
 import EditProduct from './pages/EditProduct'
 import InvoiceDetail from './pages/InvoiceDetail'
+import Settings from './pages/Settings'
 
 
 
@@ -29,6 +30,7 @@ function App() {
         <Route path="invoices" element={<Invoices />} />
         <Route path="invoices/new" element={<CreateInvoice />} />
         <Route path="invoices/:id" element={<InvoiceDetail />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
