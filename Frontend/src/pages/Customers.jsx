@@ -8,8 +8,9 @@ export default function Customers() {
   const [search, setSearch] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({
-    name: '', email: '', phone: '', address: '', state: '', gstin: ''
+    name: '', email: '', phone: '', address: '', shipToAddress: '', state: '', gstin: ''
   })
+  const [sameAsBilling, setSameAsBilling] = useState(true)
 
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ['customers'],
@@ -21,7 +22,8 @@ export default function Customers() {
     onSuccess: () => {
       queryClient.invalidateQueries(['customers'])
       setShowAdd(false)
-      setForm({ name: '', email: '', phone: '', address: '', state: '', gstin: '' })
+      setForm({ name: '', email: '', phone: '', address: '', shipToAddress: '', state: '', gstin: '' })
+      setSameAsBilling(true)
     },
   })
 
@@ -38,7 +40,10 @@ export default function Customers() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    createMutation.mutate(form)
+    createMutation.mutate({
+      ...form,
+      shipToAddress: sameAsBilling ? form.address : form.shipToAddress,
+    })
   }
 
   return (
@@ -140,9 +145,26 @@ export default function Customers() {
               </div>
 
               <div>
-                <label className="block text-[12px] font-medium text-[#1a1a18] mb-1.5">Address</label>
+                <label className="block text-[12px] font-medium text-[#1a1a18] mb-1.5">Billing Address</label>
                 <input value={form.address} onChange={e => setForm({...form, address: e.target.value})}
                   className="w-full px-3 py-2 rounded-lg border border-[#b4b2a9] bg-[#fafaf8] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]" />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-[12px] text-[#1a1a18] mb-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sameAsBilling}
+                    onChange={e => setSameAsBilling(e.target.checked)}
+                    className="cursor-pointer"
+                  />
+                  Shipping Address same as Billing Address
+                </label>
+                {!sameAsBilling && (
+                  <input value={form.shipToAddress} onChange={e => setForm({...form, shipToAddress: e.target.value})}
+                    placeholder="Shipping address"
+                    className="w-full px-3 py-2 rounded-lg border border-[#b4b2a9] bg-[#fafaf8] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]" />
+                )}
               </div>
 
               <div>

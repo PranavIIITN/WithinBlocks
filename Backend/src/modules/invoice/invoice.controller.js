@@ -1,12 +1,15 @@
+import PDFDocument from "pdfkit";
 import {
   createInvoice,
   getAllInvoices,
   getInvoiceById,
+  getInvoiceWithCompany,
   updateInvoiceStatus,
   deleteInvoice,
   searchProducts,
   searchCustomers,
 } from "./invoice.service.js";
+import { generateInvoicePdf } from "./invoice.pdf.js";
 
 const createInvoiceController = async (req, res, next) => {
   try {
@@ -89,6 +92,35 @@ const searchCustomersController = async (req, res, next) => {
   }
 };
 
+const downloadInvoicePdfController = async (req, res, next) => {
+  try {
+    const companyId = req.user.companyId;
+    const { id } = req.params;
+    const { invoice, company } = await getInvoiceWithCompany(id, companyId);
+    if (!invoice) return res.status(404).json({ success: false, message: "Invoice not found" });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${invoice.invoiceNo}.pdf"`);
+
+    const doc = new PDFDocument({ size: "A4", margin: 40 });
+    doc.pipe(res);
+
+    try {
+      await generateInvoicePdf(doc, invoice, company);
+      doc.end();
+    } catch (pdfError) {
+      // Headers (and possibly part of the PDF body) are already sent by this
+      // point, so a JSON error response isn't possible — just log and cut
+      // the stream rather than passing to next(), which would try to send
+      // one anyway and fail with a "headers already sent" error.
+      console.error(`PDF generation failed for invoice ${id}:`, pdfError);
+      doc.end();
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   createInvoiceController,
   getAllInvoicesController,
@@ -97,4 +129,5 @@ export {
   deleteInvoiceController,
   searchProductsController,
   searchCustomersController,
+  downloadInvoicePdfController,
 };

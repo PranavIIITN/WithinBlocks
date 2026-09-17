@@ -215,6 +215,16 @@ const getInvoiceById = async (id, companyId) => {
   return invoice;
 };
 
+// Used by the PDF export — needs both the invoice and the company's own
+// details (name, GSTIN, logo, signature) to render the letterhead.
+const getInvoiceWithCompany = async (id, companyId) => {
+  const [invoice, company] = await Promise.all([
+    getInvoiceById(id, companyId),
+    prisma.company.findUnique({ where: { id: companyId } }),
+  ]);
+  return { invoice, company };
+};
+
 // ===============================
 // UPDATE INVOICE STATUS
 // ===============================
@@ -324,6 +334,7 @@ export {
   createInvoice,
   getAllInvoices,
   getInvoiceById,
+  getInvoiceWithCompany,
   updateInvoiceStatus,
   deleteInvoice,
   searchProducts,

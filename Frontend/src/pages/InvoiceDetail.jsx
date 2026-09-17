@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Printer, Trash2, CheckCircle2, Ban, MoreVertical } from 'lucide-react'
+import { ArrowLeft, Printer, Download, Trash2, CheckCircle2, Ban, MoreVertical } from 'lucide-react'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
 
@@ -65,6 +65,23 @@ export default function InvoiceDetail() {
       deleteMutation.mutate()
     }
   }
+
+  const downloadPdfMutation = useMutation({
+    mutationFn: async () => {
+      const res = await api.get(`/invoices/${id}/pdf`, { responseType: 'blob' })
+      return res.data
+    },
+    onSuccess: (blob) => {
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `${invoice?.invoiceNo || 'invoice'}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    },
+  })
 
   if (isLoading) {
     return (
@@ -137,6 +154,15 @@ export default function InvoiceDetail() {
               Mark as Paid
             </button>
           )}
+          <button
+            onClick={() => downloadPdfMutation.mutate()}
+            disabled={downloadPdfMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] text-[#09090b] cursor-pointer disabled:opacity-50"
+            style={{ border: '1px solid #e4e4e7' }}
+          >
+            <Download size={14} />
+            {downloadPdfMutation.isPending ? 'Downloading...' : 'Download PDF'}
+          </button>
           <button
             onClick={() => window.print()}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] text-[#09090b] cursor-pointer"
@@ -211,8 +237,8 @@ export default function InvoiceDetail() {
               </div>
             </div>
 
-            {/* Bill to + dates */}
-            <div className="grid grid-cols-2 gap-6 mb-8">
+            {/* Bill to + Ship to + dates */}
+            <div className="grid grid-cols-3 gap-6 mb-8">
               <div>
                 <div className="text-[11px] font-semibold text-[#71717a] uppercase tracking-wide mb-2">Bill To</div>
                 <div className="text-[13px] font-medium text-[#09090b]">{invoice.customer?.name}</div>
@@ -224,6 +250,15 @@ export default function InvoiceDetail() {
                     GSTIN {invoice.customer.gstin}
                   </div>
                 )}
+              </div>
+              <div>
+                <div className="text-[11px] font-semibold text-[#71717a] uppercase tracking-wide mb-2">Ship To</div>
+                <div className="text-[13px] font-medium text-[#09090b]">{invoice.customer?.name}</div>
+                {/* Falls back to the billing address for customers created before
+                    shipToAddress existed — those rows are NULL, not auto-copied. */}
+                <div className="text-[12px] text-[#71717a] mt-1 max-w-xs">
+                  {invoice.customer?.shipToAddress || invoice.customer?.address || '—'}
+                </div>
               </div>
               <div className="text-right">
                 <div className="flex justify-end gap-8 text-[13px] mb-1.5">
@@ -365,6 +400,11 @@ export default function InvoiceDetail() {
           {statusMutation.isError && (
             <div className="no-print text-[13px] text-[#ef4444] bg-[#fef2f2] px-4 py-3 rounded-lg mt-4" style={{ border: '1px solid #fecaca' }}>
               {statusMutation.error?.response?.data?.message || 'Failed to update invoice status'}
+            </div>
+          )}
+          {downloadPdfMutation.isError && (
+            <div className="no-print text-[13px] text-[#ef4444] bg-[#fef2f2] px-4 py-3 rounded-lg mt-4" style={{ border: '1px solid #fecaca' }}>
+              Failed to download PDF — try again
             </div>
           )}
         </div>

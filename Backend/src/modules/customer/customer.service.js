@@ -7,6 +7,9 @@ const createCustomer = async (companyId, data) => {
             email: data.email,
             phone: data.phone,
             address: data.address,
+            // Defaults to the billing address when not explicitly provided —
+            // most customers ship to the same place they're billed at.
+            shipToAddress: data.shipToAddress || data.address,
             state: data.state,
             gstin: data.gstin,
             companyId,
