@@ -26,7 +26,20 @@ export default function InvoiceDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { company } = useAuthStore()
+  const { company: authCompany } = useAuthStore()
+
+  // Fetch live rather than trusting authStore alone — authStore.company is
+  // only ever as fresh as the last login/register response. If the logo or
+  // signature (or anything else) changes after that, an already-open tab
+  // would otherwise keep showing stale data. Falls back to authCompany so
+  // the header still has something to show while this is in flight, and
+  // shares its cache with Settings.jsx (same query key), so a recent visit
+  // there means this loads instantly.
+  const { data: liveCompany } = useQuery({
+    queryKey: ['company'],
+    queryFn: () => api.get('/company').then(res => res.data.data),
+  })
+  const company = liveCompany || authCompany
   const [showMenu, setShowMenu] = useState(false)
 
   const { data: invoice, isLoading, isError } = useQuery({
@@ -176,9 +189,14 @@ export default function InvoiceDetail() {
 
             {/* Header: company + invoice meta */}
             <div className="flex items-start justify-between mb-8">
-              <div className="flex items-center gap-3">
+              <div className="flex items-start gap-4">
                 {company?.logo && (
-                  <img src={company.logo} alt={company.name} className="w-12 h-12 rounded-lg object-cover" style={{ border: '1px solid #e4e4e7' }} />
+                  <img
+                    src={company.logo}
+                    alt={company.name}
+                    className="object-contain flex-shrink-0"
+                    style={{ maxWidth: '110px', maxHeight: '90px' }}
+                  />
                 )}
                 <div>
                   <div className="text-[16px] font-semibold text-[#09090b]">{company?.name || 'Your Company'}</div>
@@ -313,6 +331,31 @@ export default function InvoiceDetail() {
                     <span className="text-[14px] font-bold text-[#09090b]">Total</span>
                     <span className="text-[14px] font-bold text-[#09090b]">{formatMoney(invoice.totalAmount)}</span>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Signature — bottom right, matching a standard tax invoice layout */}
+            <div className="flex justify-end mt-10">
+              <div className="text-center" style={{ minWidth: '180px' }}>
+                <div className="text-[12px] font-semibold text-[#09090b] mb-2">
+                  For {company?.name || 'Your Company'}
+                </div>
+                {company?.signature ? (
+                  <img
+                    src={company.signature}
+                    alt="Authorized signature"
+                    className="object-contain mx-auto"
+                    style={{ maxHeight: '60px', maxWidth: '160px' }}
+                  />
+                ) : (
+                  <div style={{ height: '60px' }} />
+                )}
+                <div
+                  className="text-[11px] text-[#71717a] mt-1 pt-1.5"
+                  style={{ borderTop: '1px solid #e4e4e7' }}
+                >
+                  Authorized Signatory
                 </div>
               </div>
             </div>

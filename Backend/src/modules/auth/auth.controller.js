@@ -21,6 +21,8 @@ const registerController = async (req, res, next) => {
                     gstin: result.company.gstin,
                     address: result.company.address,
                     phone: result.company.phone,
+                    logo: result.company.logo,
+                    signature: result.company.signature,
                 },
                 user: {
                     id: result.user.id,
@@ -63,6 +65,8 @@ const loginController = async (req, res, next) => {
                     gstin: result.user.company.gstin,
                     address: result.user.company.address,
                     phone: result.user.company.phone,
+                    logo: result.user.company.logo,
+                    signature: result.user.company.signature,
                 },
             },
         });
