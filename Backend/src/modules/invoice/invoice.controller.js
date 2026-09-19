@@ -97,6 +97,7 @@ const downloadInvoicePdfController = async (req, res, next) => {
     const companyId = req.user.companyId;
     const { id } = req.params;
     const { invoice, company } = await getInvoiceWithCompany(id, companyId);
+    console.log("PDF company object:", company); // TEMP — remove after debugging
     if (!invoice) return res.status(404).json({ success: false, message: "Invoice not found" });
 
     res.setHeader("Content-Type", "application/pdf");

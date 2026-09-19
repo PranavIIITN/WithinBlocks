@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Printer, Download, Trash2, CheckCircle2, Ban, MoreVertical } from 'lucide-react'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
+import { amountToWords } from '../utils/numberToWords'
 
 const STATUS_STYLES = {
   UNPAID: { bg: '#FAEEDA', text: '#633806' },
@@ -213,7 +214,7 @@ export default function InvoiceDetail() {
         <div className="max-w-5xl mx-auto p-6">
           <div className="rounded-lg p-8" style={{ border: '1px solid #e4e4e7' }}>
 
-            {/* Header: company + invoice meta */}
+            {/* Header: company + invoice title */}
             <div className="flex items-start justify-between mb-8">
               <div className="flex items-start gap-4">
                 {company?.logo && (
@@ -227,13 +228,14 @@ export default function InvoiceDetail() {
                 <div>
                   <div className="text-[16px] font-semibold text-[#09090b]">{company?.name || 'Your Company'}</div>
                   {company?.address && <div className="text-[12px] text-[#71717a] mt-0.5 max-w-xs">{company.address}</div>}
-                  {company?.gstin && <div className="text-[12px] text-[#71717a]">GSTIN: {company.gstin}</div>}
                   {company?.phone && <div className="text-[12px] text-[#71717a]">{company.phone}</div>}
+                  {company?.email && <div className="text-[12px] text-[#71717a]">{company.email}</div>}
+                  {company?.gstin && <div className="text-[12px] text-[#71717a]">GSTIN: {company.gstin}</div>}
+                  {company?.state && <div className="text-[12px] text-[#71717a]">State: {company.state}</div>}
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-[20px] font-bold text-[#09090b] tracking-tight">INVOICE</div>
-                <div className="text-[13px] text-[#52525b] mt-1">{invoice.invoiceNo}</div>
+                <div className="text-[20px] font-bold text-[#09090b] tracking-tight">TAX INVOICE</div>
               </div>
             </div>
 
@@ -262,16 +264,12 @@ export default function InvoiceDetail() {
               </div>
               <div className="text-right">
                 <div className="flex justify-end gap-8 text-[13px] mb-1.5">
-                  <span className="text-[#71717a]">Invoice Date</span>
-                  <span className="text-[#09090b] font-medium w-28">{formatDate(invoice.createdAt)}</span>
-                </div>
-                <div className="flex justify-end gap-8 text-[13px] mb-1.5">
-                  <span className="text-[#71717a]">Due Date</span>
-                  <span className="text-[#09090b] font-medium w-28">{formatDate(invoice.dueDate)}</span>
+                  <span className="text-[#71717a]">Invoice No.</span>
+                  <span className="text-[#09090b] font-medium w-28">{invoice.invoiceNo}</span>
                 </div>
                 <div className="flex justify-end gap-8 text-[13px]">
-                  <span className="text-[#71717a]">Created By</span>
-                  <span className="text-[#09090b] font-medium w-28">{invoice.createdBy?.name || '—'}</span>
+                  <span className="text-[#71717a]">Invoice Date</span>
+                  <span className="text-[#09090b] font-medium w-28">{formatDate(invoice.createdAt)}</span>
                 </div>
               </div>
             </div>
@@ -368,6 +366,12 @@ export default function InvoiceDetail() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Invoice Total In Words */}
+            <div className="mt-5 pt-4" style={{ borderTop: '1px solid #e4e4e7' }}>
+              <div className="text-[11px] font-semibold text-[#71717a] uppercase tracking-wide mb-1">Invoice Total In Words</div>
+              <div className="text-[13px] text-[#09090b] font-medium">{amountToWords(invoice.totalAmount)}</div>
             </div>
 
             {/* Signature — bottom right, matching a standard tax invoice layout */}
