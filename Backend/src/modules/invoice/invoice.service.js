@@ -23,6 +23,105 @@ const calculateTax = (price, taxRate, priceType, isInterState) => {
 };
 
 // ===============================
+// COMPUTE INVOICE TOTALS
+// ===============================
+// Extracted from createInvoice so that WithinAgent's preview and the real
+// invoice creation run the SAME arithmetic. Do not reimplement GST anywhere
+// else — call this. (See README note about CreateInvoice.jsx duplicating it
+// on the frontend; the agent deliberately does not add a third copy.)
+//
+// Returns the fully-priced line items plus invoice-level totals, and throws
+// 404 for a customer or product that does not belong to this company.
+// ===============================
+const computeInvoiceTotals = async (companyId, customerId, items) => {
+  const company = await prisma.company.findUnique({ where: { id: companyId } });
+
+  const customer = await prisma.customer.findFirst({
+    where: { id: customerId, companyId },
+  });
+
+  if (!customer) {
+    const error = new Error("Customer not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Intra vs inter state, from the explicit `state` field on Company/Customer.
+  const isInterState = company.state !== customer.state;
+
+  let subtotal = 0;
+  let totalTax = 0;
+
+  const invoiceItems = await Promise.all(
+    items.map(async (item) => {
+      const product = await prisma.product.findFirst({
+        where: { id: item.productId, companyId },
+      });
+
+      if (!product) {
+        const error = new Error(`Product ${item.productId} not found`);
+        error.statusCode = 404;
+        throw error;
+      }
+
+      const taxRate = item.tax ?? product.tax ?? 0;
+      const priceType = product.priceType ?? "EXCLUSIVE";
+      const unitPrice = item.unitPrice ?? product.price;
+      const tax = calculateTax(unitPrice, taxRate, priceType, isInterState);
+
+      const itemSubtotal = tax.subtotal * item.quantity;
+      const itemTaxAmount = tax.taxAmount * item.quantity;
+      const itemTotal = itemSubtotal + itemTaxAmount;
+
+      subtotal += itemSubtotal;
+      totalTax += itemTaxAmount;
+
+      return {
+        productId: item.productId,
+        productName: product.name,
+        hsn: product.hsn,
+        unit: product.unit,
+        stock: product.stock,
+        priceType,
+        quantity: item.quantity,
+        unitPrice,
+        tax: taxRate,
+        cgst: tax.cgst * item.quantity,
+        sgst: tax.sgst * item.quantity,
+        igst: tax.igst * item.quantity,
+        total: itemTotal,
+      };
+    })
+  );
+
+  return {
+    company,
+    customer,
+    isInterState,
+    items: invoiceItems,
+    subtotal,
+    taxAmount: totalTax,
+    totalAmount: subtotal + totalTax,
+    cgst: invoiceItems.reduce((sum, i) => sum + (i.cgst || 0), 0),
+    sgst: invoiceItems.reduce((sum, i) => sum + (i.sgst || 0), 0),
+    igst: invoiceItems.reduce((sum, i) => sum + (i.igst || 0), 0),
+  };
+};
+
+// Strip the preview-only fields before handing rows to Prisma.
+const toInvoiceItemRows = (items) =>
+  items.map(({ productId, quantity, unitPrice, tax, cgst, sgst, igst, total }) => ({
+    productId,
+    quantity,
+    unitPrice,
+    tax,
+    cgst,
+    sgst,
+    igst,
+    total,
+  }));
+
+// ===============================
 // HELPER — Generate Invoice Number
 // ===============================
 const generateInvoiceNumber = async (companyId, tx) => {
@@ -58,6 +157,33 @@ const deductStock = async (items, tx) => {
 };
 
 // ===============================
+// CHECK STOCK (read-only)
+// ===============================
+// deductStock only throws at execution time. The agent needs to know BEFORE
+// showing a preview, otherwise the user confirms something that then fails.
+// ===============================
+const checkStock = async (companyId, items) => {
+  const problems = [];
+
+  for (const item of items) {
+    const product = await prisma.product.findFirst({
+      where: { id: item.productId, companyId },
+    });
+    if (!product) continue;
+    if (product.stock < item.quantity) {
+      problems.push({
+        productId: product.id,
+        name: product.name,
+        requested: item.quantity,
+        available: product.stock,
+      });
+    }
+  }
+
+  return problems;
+};
+
+// ===============================
 // HELPER — Restore Stock
 // ===============================
 const restoreStock = async (invoiceId, tx) => {
@@ -77,75 +203,15 @@ const restoreStock = async (invoiceId, tx) => {
 // CREATE INVOICE
 // ===============================
 const createInvoice = async (companyId, userId, data) => {
-  const company = await prisma.company.findUnique({
-    where: { id: companyId },
-  });
-
-  const customer = await prisma.customer.findFirst({
-    where: { id: data.customerId, companyId },
-  });
-
-  if (!customer) {
-    const error = new Error("Customer not found");
-    error.statusCode = 404;
-    throw error;
-  }
-
-  // Determine intra or inter state — now based on the explicit `state`
-  // field on Company/Customer (required since the schema migration),
-  // rather than inferring it from GSTIN prefixes.
-  const isInterState = company.state !== customer.state;
-
   const isDraft = data.status === "DRAFT";
 
-  // Calculate items
-  let subtotal = 0;
-  let totalTax = 0;
-
-  const invoiceItems = await Promise.all(
-    data.items.map(async (item) => {
-      const product = await prisma.product.findFirst({
-        where: { id: item.productId, companyId },
-      });
-
-      if (!product) {
-        const error = new Error(`Product ${item.productId} not found`);
-        error.statusCode = 404;
-        throw error;
-      }
-
-      const taxRate = item.tax ?? product.tax ?? 0;
-      const priceType = product.priceType ?? "EXCLUSIVE";
-      const tax = calculateTax(item.unitPrice, taxRate, priceType, isInterState);
-
-      const itemSubtotal = tax.subtotal * item.quantity;
-      const itemTaxAmount = tax.taxAmount * item.quantity;
-      const itemTotal = itemSubtotal + itemTaxAmount;
-
-      subtotal += itemSubtotal;
-      totalTax += itemTaxAmount;
-
-      return {
-        productId: item.productId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        tax: taxRate,
-        cgst: tax.cgst * item.quantity,
-        sgst: tax.sgst * item.quantity,
-        igst: tax.igst * item.quantity,
-        total: itemTotal,
-      };
-    })
-  );
-
-  const totalAmount = subtotal + totalTax;
-  const totalCgst = invoiceItems.reduce((sum, item) => sum + (item.cgst || 0), 0);
-  const totalSgst = invoiceItems.reduce((sum, item) => sum + (item.sgst || 0), 0);
-  const totalIgst = invoiceItems.reduce((sum, item) => sum + (item.igst || 0), 0);
+  // Single source of truth for pricing + GST.
+  const totals = await computeInvoiceTotals(companyId, data.customerId, data.items);
+  const invoiceItems = toInvoiceItemRows(totals.items);
 
   const invoice = await prisma.$transaction(async (tx) => {
     // Auto generate invoice number if not provided
-    const invoiceNo = data.invoiceNo || await generateInvoiceNumber(companyId, tx);
+    const invoiceNo = data.invoiceNo || (await generateInvoiceNumber(companyId, tx));
 
     // Deduct stock only if not a draft
     if (!isDraft) {
@@ -156,12 +222,12 @@ const createInvoice = async (companyId, userId, data) => {
       data: {
         invoiceNo,
         status: isDraft ? "DRAFT" : "UNPAID",
-        subtotal,
-        cgst: totalCgst,
-        sgst: totalSgst,
-        igst: totalIgst,
-        taxAmount: totalTax,
-        totalAmount,
+        subtotal: totals.subtotal,
+        cgst: totals.cgst,
+        sgst: totals.sgst,
+        igst: totals.igst,
+        taxAmount: totals.taxAmount,
+        totalAmount: totals.totalAmount,
         dueDate: data.dueDate ? new Date(data.dueDate) : null,
         notes: data.notes,
         companyId,
@@ -332,6 +398,8 @@ const searchCustomers = async (companyId, query) => {
 
 export {
   createInvoice,
+  computeInvoiceTotals,
+  checkStock,
   getAllInvoices,
   getInvoiceById,
   getInvoiceWithCompany,

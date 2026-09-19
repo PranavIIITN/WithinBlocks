@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Package, Users, FileText, BarChart2, Settings, LogOut, HelpCircle } from 'lucide-react'
 import useAuthStore from '../store/authStore'
+import AgentPanel from '../components/agent/AgentPanel'
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -114,6 +115,9 @@ export default function AppLayout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Outlet />
       </div>
+
+      {/* WithinAgent — mounted at the layout so it's available on every page */}
+      <AgentPanel />
     </div>
   )
 }
