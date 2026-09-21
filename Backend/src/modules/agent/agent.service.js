@@ -42,7 +42,18 @@ export const runAgent = async (ctx, message, context = {}) => {
 
       const customer = await resolveCustomer(ctx.companyId, intent.customer);
       if (customer.status === "none") {
-        return clarify(`I couldn't find a customer called "${intent.customer}".`, [customer]);
+        return {
+          status: "clarify",
+          message: `I couldn't find a customer called "${intent.customer}". Want to add them as a new customer and continue this invoice?`,
+          clarify: [customer],
+          // The panel uses this to render a "Create customer & continue"
+          // button that pre-fills name + carries the original items, so
+          // confirming it resumes this exact invoice — see executeCustomer.
+          offerCreateCustomer: {
+            name: intent.customer,
+            resumeInvoiceItems: intent.items,
+          },
+        };
       }
       if (customer.status === "ambiguous") {
         return clarify(`Which "${intent.customer}" did you mean?`, [customer]);

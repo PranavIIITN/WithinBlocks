@@ -5,7 +5,14 @@ import {
   getAllInvoices,
 } from "../invoice/invoice.service.js";
 import { createProduct, getAllProducts } from "../product/product.service.js";
-import { invoicePayloadSchema, productPayloadSchema } from "./agent.schemas.js";
+import { createCustomer } from "../customer/customer.service.js";
+import { resolveInvoiceItems } from "./agent.resolvers.js";
+import {
+  invoicePayloadSchema,
+  productPayloadSchema,
+  customerPayloadWithResumeSchema,
+  customerPreviewSchema,
+} from "./agent.schemas.js";
 
 // ===============================================================
 // ACTION REGISTRY
@@ -238,12 +245,105 @@ export const queryProducts = async ({ companyId }, filters = {}) => {
   };
 };
 
+// ---------------------------------------------------------------
+// ADD CUSTOMER — preview
+// ---------------------------------------------------------------
+// Offered by agent.service.js when an invoice's customer doesn't resolve.
+// resumeInvoiceItems (if present) is carried through unchanged so confirm
+// can pick the original invoice back up — never re-interpreted or re-sent
+// through the LLM, so it can't drift from what the user actually typed.
+export const previewCustomer = async (_ctx, payload) => {
+  const parsed = customerPreviewSchema.safeParse(payload);
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: parsed.error.issues[0].message,
+    };
+  }
+
+  const missingState = !parsed.data.state;
+
+  return {
+    status: "preview",
+    action: "add_customer",
+    needsConfirmation: true,
+    data: parsed.data,
+    preview: {
+      name: parsed.data.name,
+      state: parsed.data.state ?? null,
+      email: parsed.data.email ?? null,
+      phone: parsed.data.phone ?? null,
+      gstin: parsed.data.gstin ?? null,
+      resumingInvoiceFor: parsed.data.resumeInvoiceItems?.length
+        ? parsed.data.resumeInvoiceItems.map((i) => `${i.quantity} × ${i.name}`).join(", ")
+        : null,
+    },
+    warnings: [
+      ...(missingState ? ["Select the customer's state before confirming — needed for GST."] : []),
+      ...(!missingState && !parsed.data.gstin
+        ? ["No GSTIN set — fine for an unregistered/individual customer, but check if that's intended."]
+        : []),
+    ],
+    blocked: missingState,
+  };
+};
+
+// ---------------------------------------------------------------
+// ADD CUSTOMER — execute
+// ---------------------------------------------------------------
+// Creates the customer, then — if this was interrupting an invoice —
+// immediately re-resolves and re-previews that invoice with the new
+// customer, so the user doesn't have to repeat their original request.
+export const executeCustomer = async (ctx, payload) => {
+  const parsed = customerPayloadWithResumeSchema.safeParse(payload);
+  if (!parsed.success) {
+    const error = new Error(parsed.error.issues[0].message);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const { resumeInvoiceItems, ...customerData } = parsed.data;
+  const customer = await createCustomer(ctx.companyId, customerData);
+
+  if (!resumeInvoiceItems?.length) {
+    return {
+      status: "result",
+      action: "add_customer",
+      message: `${customer.name} added to your customers.`,
+      data: customer,
+      link: `/customers`,
+    };
+  }
+
+  // Resume the invoice the user originally asked for, now that the
+  // customer exists. Product resolution still goes through the normal
+  // resolvers — a new customer doesn't skip product-name checks.
+  const { items, unresolved } = await resolveInvoiceItems(ctx.companyId, resumeInvoiceItems);
+
+  if (unresolved.length > 0) {
+    const names = unresolved.map((u) => `"${u.query}"`).join(", ");
+    return {
+      status: "clarify",
+      message: `${customer.name} was created. Now I couldn't find ${names} in your catalogue — want to add them, or did you mean something else?`,
+      clarify: unresolved,
+    };
+  }
+
+  const invoicePreview = await previewInvoice(ctx, { customerId: customer.id, items });
+  return {
+    ...invoicePreview,
+    message: `${customer.name} was added. Here's the invoice:`,
+  };
+};
+
 export const EXECUTORS = {
   create_invoice: executeInvoice,
   add_product: executeProduct,
+  add_customer: executeCustomer,
 };
 
 export const PREVIEWERS = {
   create_invoice: previewInvoice,
   add_product: previewProduct,
+  add_customer: previewCustomer,
 };

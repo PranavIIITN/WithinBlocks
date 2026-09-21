@@ -22,7 +22,7 @@ export default function AgentPanel() {
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')
   const location = useLocation()
-  const { messages, pending, loading, send, confirm, cancel, repreview, reset } = useAgent()
+  const { messages, pending, loading, send, confirm, cancel, repreview, reset, createCustomerAndContinue } = useAgent()
   const scrollRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -123,10 +123,12 @@ export default function AgentPanel() {
               key={i}
               entry={entry}
               isPending={pending && entry.status === 'preview' && i === messages.length - 1}
+              isLatest={i === messages.length - 1}
               loading={loading}
               onConfirm={confirm}
               onCancel={cancel}
               onEdit={(payload) => repreview(entry.action, payload)}
+              onCreateCustomer={createCustomerAndContinue}
             />
           )
         )}

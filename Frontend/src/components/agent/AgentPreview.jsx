@@ -5,6 +5,62 @@ import { Link } from 'react-router-dom'
 const inr = (n) =>
   `₹${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
+const INDIAN_STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa',
+  'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala',
+  'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland',
+  'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
+  'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Delhi',
+]
+
+// ---------------------------------------------------------------
+// CUSTOMER PREVIEW — offered when an invoice's customer doesn't exist yet
+// ---------------------------------------------------------------
+function CustomerPreview({ entry, onEdit, disabled }) {
+  const p = entry.preview
+  const [state, setState] = useState(p.state || '')
+
+  return (
+    <div className="border border-[#e4e4e7] rounded-lg bg-white p-3 space-y-2">
+      <div className="flex justify-between text-[11px]">
+        <span className="text-[#71717a]">Name</span>
+        <span className="text-[#09090b] font-medium">{p.name}</span>
+      </div>
+
+      <div className="flex justify-between items-center text-[11px]">
+        <span className="text-[#71717a]">State</span>
+        <select
+          value={state}
+          disabled={disabled}
+          onChange={(e) => {
+            setState(e.target.value)
+            onEdit({ ...entry.data, state: e.target.value })
+          }}
+          className="border border-[#e4e4e7] rounded px-1.5 py-1 text-[11px] text-[#09090b] max-w-[160px]"
+        >
+          <option value="">Select state…</option>
+          {INDIAN_STATES.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+      </div>
+
+      {p.gstin && (
+        <div className="flex justify-between text-[11px]">
+          <span className="text-[#71717a]">GSTIN</span>
+          <span className="text-[#09090b] font-medium">{p.gstin}</span>
+        </div>
+      )}
+
+      {p.resumingInvoiceFor && (
+        <div className="text-[10px] text-[#71717a] pt-1 border-t border-[#f4f4f5]">
+          Will continue the invoice: {p.resumingInvoiceFor}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ---------------------------------------------------------------
 // INVOICE PREVIEW — a real tax invoice summary, not a text blob
 // ---------------------------------------------------------------
@@ -176,7 +232,7 @@ function ResultTable({ table }) {
 // ---------------------------------------------------------------
 // MAIN
 // ---------------------------------------------------------------
-export default function AgentPreview({ entry, isPending, onConfirm, onCancel, onEdit, loading }) {
+export default function AgentPreview({ entry, isPending, isLatest, onConfirm, onCancel, onEdit, onCreateCustomer, loading }) {
   return (
     <div className="space-y-2">
       {entry.message && (
@@ -193,6 +249,9 @@ export default function AgentPreview({ entry, isPending, onConfirm, onCancel, on
         <InvoicePreview entry={entry} onEdit={onEdit} disabled={!isPending || loading} />
       )}
       {entry.status === 'preview' && entry.action === 'add_product' && <ProductPreview entry={entry} />}
+      {entry.status === 'preview' && entry.action === 'add_customer' && (
+        <CustomerPreview entry={entry} onEdit={onEdit} disabled={!isPending || loading} />
+      )}
       {entry.status === 'result' && entry.table && <ResultTable table={entry.table} />}
 
       {entry.warnings?.map((w) => (
@@ -222,6 +281,16 @@ export default function AgentPreview({ entry, isPending, onConfirm, onCancel, on
         ) : null
       )}
 
+      {entry.status === 'clarify' && entry.offerCreateCustomer && isLatest && (
+        <button
+          onClick={() => onCreateCustomer(entry.offerCreateCustomer)}
+          disabled={loading}
+          className="w-full text-[11px] font-medium text-[#2563eb] border border-[#2563eb]/30 bg-[#eff6ff] rounded-lg px-2.5 py-2 hover:bg-[#dbeafe] disabled:opacity-40"
+        >
+          + Create "{entry.offerCreateCustomer.name}" as a new customer
+        </button>
+      )}
+
       {entry.status === 'result' && entry.link && (
         <Link to={entry.link} className="inline-flex items-center gap-1 text-[11px] text-[#2563eb] hover:underline">
           Open <ExternalLink size={11} />
@@ -237,7 +306,11 @@ export default function AgentPreview({ entry, isPending, onConfirm, onCancel, on
             className="flex-1 flex items-center justify-center gap-1.5 bg-[#2563eb] text-white text-[12px] font-medium rounded-lg py-2 hover:bg-[#1d4ed8] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Check size={13} />
-            {entry.blocked ? 'Not enough stock' : 'Confirm'}
+            {entry.blocked
+              ? entry.action === 'add_customer'
+                ? 'Select a state first'
+                : 'Not enough stock'
+              : 'Confirm'}
           </button>
           <button
             onClick={onCancel}

@@ -200,7 +200,40 @@ export const productPayloadSchema = z.object({
   ean: z.string().nullable().optional(),
 });
 
+// ===============================================================
+// ADD CUSTOMER — offered when invoice resolution can't find one
+// ===============================================================
+// "state" is required, not optional: it drives the CGST/SGST vs IGST
+// decision in computeInvoiceTotals, so a customer created without it
+// would produce a wrong tax split on the very invoice this was for.
+export const customerPayloadSchema = z.object({
+  name: z.string().min(1, "Customer name is required"),
+  state: z.string().min(1, "Customer's state is required for GST calculation"),
+  email: z.string().email().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
+  shipToAddress: z.string().nullable().optional(),
+  gstin: z.string().nullable().optional(),
+});
+
+// A create_customer confirm can carry the invoice it was interrupting, so
+// the orchestrator can resume that invoice immediately after creating the
+// customer, instead of making the user repeat the whole request.
+export const customerPayloadWithResumeSchema = customerPayloadSchema.extend({
+  resumeInvoiceItems: z
+    .array(z.object({ name: z.string(), quantity: z.number().positive() }))
+    .nullable()
+    .optional(),
+});
+
+// Preview-only variant: state starts empty (the user fills it in the panel
+// before confirming), so previewing doesn't hard-fail before the form is
+// even shown. Confirm always re-validates against the strict schema above.
+export const customerPreviewSchema = customerPayloadWithResumeSchema.extend({
+  state: z.string().nullable().optional(),
+});
+
 export const confirmSchema = z.object({
-  action: z.enum(["create_invoice", "add_product"]),
+  action: z.enum(["create_invoice", "add_product", "add_customer"]),
   data: z.unknown(),
 });

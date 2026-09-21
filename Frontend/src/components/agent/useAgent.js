@@ -71,6 +71,27 @@ export default function useAgent() {
     }
   }, [])
 
+  // Straight to a customer preview, pre-filled with the name the user
+  // originally typed and the invoice items to resume once it's confirmed.
+  const createCustomerAndContinue = useCallback(
+    async (offer) => {
+      setLoading(true)
+      try {
+        const { data } = await api.post('/agent/preview', {
+          action: 'add_customer',
+          data: { name: offer.name, state: '', resumeInvoiceItems: offer.resumeInvoiceItems },
+        })
+        push({ role: 'agent', ...data.data })
+        setPending(data.data)
+      } catch (err) {
+        push({ role: 'agent', status: 'error', message: errText(err) })
+      } finally {
+        setLoading(false)
+      }
+    },
+    []
+  )
+
   const confirm = useCallback(async () => {
     if (!pending) return
     setLoading(true)
@@ -102,5 +123,5 @@ export default function useAgent() {
     setPending(null)
   }, [])
 
-  return { messages, pending, loading, send, confirm, cancel, repreview, reset }
+  return { messages, pending, loading, send, confirm, cancel, repreview, reset, createCustomerAndContinue }
 }
