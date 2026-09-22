@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { Search, Plus, Trash2, ChevronDown } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Search, Plus, Trash2, ChevronDown, UserPlus } from 'lucide-react'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
+import { INDIAN_STATES } from '../constants/indianStates'
 
 const PAYMENT_TERMS = [
   { label: 'Due on Receipt', days: 0 },
@@ -19,6 +20,7 @@ const ITEM_GRID_COLS = '70px 1.8fr 60px 90px 90px 55px 75px 75px 75px 100px 24px
 
 export default function CreateInvoice() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { company } = useAuthStore()
   const [customerSearch, setCustomerSearch] = useState('')
   const [productSearch, setProductSearch] = useState('')
@@ -26,6 +28,10 @@ export default function CreateInvoice() {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
   const [showProductDropdown, setShowProductDropdown] = useState(false)
   const [showTermsDropdown, setShowTermsDropdown] = useState(false)
+  const [showAddCustomer, setShowAddCustomer] = useState(false)
+  const [newCustomer, setNewCustomer] = useState({
+    name: '', email: '', phone: '', address: '', state: '', gstin: '',
+  })
   const [items, setItems] = useState([])
   const [paymentTerm, setPaymentTerm] = useState(PAYMENT_TERMS[0])
   const [form, setForm] = useState({
@@ -57,6 +63,39 @@ export default function CreateInvoice() {
     mutationFn: (data) => api.post('/invoices', data),
     onSuccess: (res) => navigate(`/invoices/${res.data.data.id}`),
   })
+
+  // Quick-create a customer without leaving the invoice. Same endpoint the
+  // Customers page uses, so it's scoped and validated identically — this
+  // isn't a shortcut around anything, just the same form in a smaller box.
+  const createCustomerMutation = useMutation({
+    mutationFn: (data) => api.post('/customers', data),
+    onSuccess: (res) => {
+      const customer = res.data.data
+      setSelectedCustomer(customer)
+      setShowAddCustomer(false)
+      setShowCustomerDropdown(false)
+      setCustomerSearch('')
+      setNewCustomer({ name: '', email: '', phone: '', address: '', state: '', gstin: '' })
+      // So this customer shows up immediately if the search dropdown is used again.
+      queryClient.invalidateQueries({ queryKey: ['customer-search'] })
+      queryClient.invalidateQueries({ queryKey: ['customers'] })
+    },
+  })
+
+  const openAddCustomer = () => {
+    // Pre-fill with whatever they already typed — no need to retype the name.
+    setNewCustomer((f) => ({ ...f, name: customerSearch }))
+    setShowAddCustomer(true)
+    setShowCustomerDropdown(false)
+  }
+
+  const handleCreateCustomer = (e) => {
+    e.preventDefault()
+    createCustomerMutation.mutate({
+      ...newCustomer,
+      shipToAddress: newCustomer.address, // billing == shipping by default, same as the Customers page
+    })
+  }
 
   // Update due date when payment term changes
   useEffect(() => {
@@ -230,7 +269,7 @@ export default function CreateInvoice() {
                         onChange={e => { setCustomerSearch(e.target.value); setShowCustomerDropdown(true) }}
                         onFocus={() => setShowCustomerDropdown(true)}
                       />
-                      {showCustomerDropdown && customerResults.length > 0 && (
+                      {showCustomerDropdown && (customerResults.length > 0 || customerSearch.length > 1) && (
                         <div
                           className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-lg z-20 mt-1 overflow-y-auto"
                           style={{ border: '1px solid #e4e4e7', maxHeight: '280px' }}
@@ -246,6 +285,17 @@ export default function CreateInvoice() {
                               <div className="text-[11px] text-[#71717a]">{c.phone} {c.gstin && `· GSTIN: ${c.gstin}`}</div>
                             </div>
                           ))}
+                          {customerSearch.length > 1 && (
+                            <div
+                              onClick={openAddCustomer}
+                              className="flex items-center gap-2 px-4 py-3 hover:bg-[#eff6ff] cursor-pointer text-[#2563eb]"
+                            >
+                              <UserPlus size={14} />
+                              <span className="text-[13px] font-medium">
+                                Add "{customerSearch}" as a new customer
+                              </span>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -594,6 +644,116 @@ export default function CreateInvoice() {
           Total Quantity: <span className="font-semibold text-[#09090b]">{totalQty}</span>
         </div>
       </div>
+
+      {/* Quick-add customer — same endpoint/fields as the Customers page,
+          just reachable without leaving the invoice you're building. */}
+      {showAddCustomer && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl w-[440px] p-6" style={{ border: '1px solid #e4e4e7' }}>
+            <div className="flex items-center justify-between mb-5">
+              <div className="text-[15px] font-semibold text-[#09090b]">Add new customer</div>
+              <button
+                onClick={() => setShowAddCustomer(false)}
+                className="text-[#a1a1aa] hover:text-[#09090b] cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCustomer} className="flex flex-col gap-3.5">
+              <div>
+                <label style={labelStyle}>Name *</label>
+                <input
+                  style={inputStyle}
+                  value={newCustomer.name}
+                  onChange={e => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label style={{ ...labelStyle, color: '#52525b' }}>Email</label>
+                  <input
+                    type="email"
+                    style={inputStyle}
+                    value={newCustomer.email}
+                    onChange={e => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label style={{ ...labelStyle, color: '#52525b' }}>Phone</label>
+                  <input
+                    style={inputStyle}
+                    value={newCustomer.phone}
+                    onChange={e => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ ...labelStyle, color: '#52525b' }}>Address</label>
+                <input
+                  style={inputStyle}
+                  value={newCustomer.address}
+                  onChange={e => setNewCustomer({ ...newCustomer, address: e.target.value })}
+                />
+              </div>
+
+              <div>
+                {/* Required, not decorative — this is what decides CGST/SGST vs
+                    IGST on the invoice you're about to build for them. */}
+                <label style={labelStyle}>State *</label>
+                <select
+                  style={inputStyle}
+                  value={newCustomer.state}
+                  onChange={e => setNewCustomer({ ...newCustomer, state: e.target.value })}
+                  required
+                >
+                  <option value="" disabled>Select state</option>
+                  {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ ...labelStyle, color: '#52525b' }}>GSTIN</label>
+                <input
+                  style={{ ...inputStyle, fontFamily: 'monospace' }}
+                  value={newCustomer.gstin}
+                  onChange={e => setNewCustomer({ ...newCustomer, gstin: e.target.value })}
+                  placeholder="29AABCM9527A1ZK"
+                />
+              </div>
+
+              {createCustomerMutation.isError && (
+                <div className="text-[12px] text-[#791F1F] bg-[#fef2f2] px-3 py-2 rounded-lg" style={{ border: '1px solid #fecaca' }}>
+                  {createCustomerMutation.error?.response?.data?.message || 'Something went wrong'}
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowAddCustomer(false)}
+                  className="flex-1 py-2 rounded-lg text-[13px] text-[#09090b] cursor-pointer"
+                  style={{ border: '1px solid #e4e4e7' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createCustomerMutation.isPending}
+                  className="flex-1 py-2 rounded-lg text-[13px] font-medium text-white cursor-pointer disabled:opacity-50"
+                  style={{ background: '#2563eb' }}
+                >
+                  {createCustomerMutation.isPending ? 'Adding…' : 'Add & use this customer'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
