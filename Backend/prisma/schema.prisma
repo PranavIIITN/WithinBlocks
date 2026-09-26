@@ -35,7 +35,7 @@ model User {
   password      String?
   role          Role      @default(STAFF)
   isActive      Boolean   @default(false)
-  inviteToken   String?
+  inviteToken   String?   @unique
   inviteExpiry  DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

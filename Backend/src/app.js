@@ -6,6 +6,7 @@ import invoiceRoutes from "./modules/invoice/invoice.routes.js";
 import uploadRoutes from "./modules/upload/upload.routes.js";
 import companyRoutes from "./modules/company/company.routes.js";
 import agentRoutes from "./modules/agent/agent.routes.js";
+import userRoutes from "./modules/user/user.routes.js";
 import cors from 'cors';
 
 
@@ -27,6 +28,7 @@ app.use("/api/invoices", invoiceRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/company", companyRoutes);
 app.use("/api/agent", agentRoutes);
+app.use("/api/users", userRoutes);
 
 
 // 3. Global error handler

@@ -11,6 +11,8 @@ import AddProduct from './pages/AddProduct'
 import EditProduct from './pages/EditProduct'
 import InvoiceDetail from './pages/InvoiceDetail'
 import Settings from './pages/Settings'
+import Team from './pages/Team'
+import AcceptInvite from './pages/AcceptInvite'
 
 
 
@@ -21,6 +23,7 @@ function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/accept-invite" element={<AcceptInvite />} />
       <Route path="/" element={<AppLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="products" element={<Products />} />
@@ -30,6 +33,7 @@ function App() {
         <Route path="invoices" element={<Invoices />} />
         <Route path="invoices/new" element={<CreateInvoice />} />
         <Route path="invoices/:id" element={<InvoiceDetail />} />
+        <Route path="team" element={<Team />} />
         <Route path="settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/login" />} />

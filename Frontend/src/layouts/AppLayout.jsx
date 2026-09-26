@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Package, Users, FileText, BarChart2, Settings, LogOut, HelpCircle } from 'lucide-react'
+import { LayoutDashboard, Package, Users, FileText, BarChart2, Settings, LogOut, HelpCircle, UserCog } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import AgentPanel from '../components/agent/AgentPanel'
 
@@ -60,6 +60,23 @@ export default function AppLayout() {
               </NavLink>
             )
           })}
+
+          {/* Owner-only — matches backend authorizeOwner on every /users route */}
+          {user?.role === 'OWNER' && (
+            <NavLink
+              to="/team"
+              className={({ isActive }) =>
+                `flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] mb-0.5 transition-colors ${
+                  isActive
+                    ? 'bg-[#eff6ff] text-[#2563eb] font-medium'
+                    : 'text-[#52525b] hover:bg-[#f4f4f5] hover:text-[#09090b]'
+                }`
+              }
+            >
+              <UserCog size={15} />
+              Team
+            </NavLink>
+          )}
 
           <div className="h-px bg-[#e4e4e7] my-3" />
 
