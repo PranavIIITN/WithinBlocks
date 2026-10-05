@@ -27,6 +27,7 @@ const buildInviteLink = (token) => {
 // INVITE USER
 // ===============================================================
 const inviteUser = async (companyId, email) => {
+  const company = await prisma.company.findUnique({ where: { id: companyId } });
   const existing = await prisma.user.findUnique({ where: { email } });
 
   if (existing) {
@@ -59,7 +60,12 @@ const inviteUser = async (companyId, email) => {
       data: { inviteToken, inviteExpiry },
     });
 
-    return { user: toPublicUser(user), inviteLink: buildInviteLink(inviteToken), reinvited: true };
+    return {
+      user: toPublicUser(user),
+      inviteLink: buildInviteLink(inviteToken),
+      reinvited: true,
+      companyName: company.name,
+    };
   }
 
   const inviteToken = crypto.randomBytes(INVITE_TOKEN_BYTES).toString("hex");
@@ -78,7 +84,12 @@ const inviteUser = async (companyId, email) => {
     },
   });
 
-  return { user: toPublicUser(user), inviteLink: buildInviteLink(inviteToken), reinvited: false };
+  return {
+    user: toPublicUser(user),
+    inviteLink: buildInviteLink(inviteToken),
+    reinvited: false,
+    companyName: company.name,
+  };
 };
 
 // ===============================================================

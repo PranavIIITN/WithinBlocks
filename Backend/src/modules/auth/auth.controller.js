@@ -1,4 +1,5 @@
-import {register, login} from "./auth.service.js";
+import {register, login, requestPasswordReset, resetPassword} from "./auth.service.js";
+import { forgotPasswordSchema, resetPasswordSchema } from "./auth.schemas.js";
 
 const registerController = async (req, res, next) => {
     try {
@@ -75,4 +76,43 @@ const loginController = async (req, res, next) => {
     }
 };
 
-export {registerController, loginController};
+const forgotPasswordController = async (req, res, next) => {
+    try {
+        const parsed = forgotPasswordSchema.safeParse(req.body);
+        if (!parsed.success) {
+            return res.status(400).json({ success: false, message: parsed.error.issues[0].message });
+        }
+
+        await requestPasswordReset(parsed.data.email);
+
+        // Identical response whether or not the email exists, is active, or
+        // the send even succeeded — see auth.service.js for why. This line
+        // must never become conditional on anything requestPasswordReset did.
+        res.status(200).json({
+            success: true,
+            message: "If an account exists with that email, we've sent a password reset link.",
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const resetPasswordController = async (req, res, next) => {
+    try {
+        const parsed = resetPasswordSchema.safeParse(req.body);
+        if (!parsed.success) {
+            return res.status(400).json({ success: false, message: parsed.error.issues[0].message });
+        }
+
+        await resetPassword(parsed.data);
+
+        res.status(200).json({
+            success: true,
+            message: "Password reset successfully. You can now sign in with your new password.",
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export {registerController, loginController, forgotPasswordController, resetPasswordController};

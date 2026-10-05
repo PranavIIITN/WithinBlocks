@@ -1,14 +1,17 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Navigate, Link } from 'react-router-dom'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { setAuth } = useAuthStore()
+  const { token, setAuth } = useAuthStore()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Already signed in — skip the form, same reasoning as AppLayout's guard.
+  if (token) return <Navigate to="/" replace />
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -106,7 +109,7 @@ export default function Login() {
           </div>
 
           <div className="flex justify-end">
-            <span className="text-[12px] text-[#185FA5] cursor-pointer">Forgot password?</span>
+            <Link to="/forgot-password" className="text-[12px] text-[#185FA5]">Forgot password?</Link>
           </div>
 
           <button

@@ -10,6 +10,12 @@ export default function Team() {
   const [showInvite, setShowInvite] = useState(false)
   const [email, setEmail] = useState('')
   const [lastInviteLink, setLastInviteLink] = useState(null)
+  const [emailSent, setEmailSent] = useState(true)
+  // Tracks "an invite was just created," separate from lastInviteLink —
+  // a successful send in production means no link to show, but the modal
+  // still needs to confirm something happened rather than silently
+  // falling back to the empty form.
+  const [inviteSuccess, setInviteSuccess] = useState(false)
   const [copied, setCopied] = useState(false)
 
   const { data: users = [], isLoading, error: listError } = useQuery({
@@ -22,9 +28,11 @@ export default function Team() {
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       setEmail('')
-      // Only present in non-production responses (see Backend user.controller.js) —
-      // in production there's nothing to show here yet, since there's no email
-      // service wired up. The link still exists; it's just not in this response.
+      setEmailSent(res.data.data.emailSent)
+      setInviteSuccess(true)
+      // Present whenever it's actually needed: always in dev, or in
+      // production only when the email failed to send (see Backend
+      // user.controller.js for the reasoning).
       setLastInviteLink(res.data.data.inviteLink || null)
     },
   })
@@ -48,6 +56,7 @@ export default function Team() {
   const closeInviteModal = () => {
     setShowInvite(false)
     setLastInviteLink(null)
+    setInviteSuccess(false)
     inviteMutation.reset()
   }
 
@@ -156,7 +165,7 @@ export default function Team() {
               <button onClick={closeInviteModal} className="text-[#a1a1aa] hover:text-[#09090b] cursor-pointer">✕</button>
             </div>
 
-            {!lastInviteLink ? (
+            {!inviteSuccess ? (
               <form onSubmit={handleInvite} className="flex flex-col gap-3.5">
                 <div>
                   <label className="block text-[12px] font-medium text-[#09090b] mb-1.5">Email address</label>
@@ -201,18 +210,24 @@ export default function Team() {
                 </div>
               </form>
             ) : (
-              // No email service — hand the owner the link to send
-              // themselves in the meantime.
               <div className="flex flex-col gap-3.5">
-                <div className="text-[13px] text-[#52525b]">
-                  Invite created. Since email sending isn't set up yet, share this link with them directly:
-                </div>
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ border: '1px solid #e4e4e7', background: '#fafafa' }}>
-                  <div className="flex-1 text-[12px] text-[#52525b] truncate font-mono">{lastInviteLink}</div>
-                  <button onClick={copyLink} className="flex-shrink-0 text-[#2563eb] cursor-pointer">
-                    {copied ? <Check size={14} /> : <Copy size={14} />}
-                  </button>
-                </div>
+                {emailSent ? (
+                  <div className="text-[13px] text-[#52525b]">
+                    Invite email sent{lastInviteLink ? '. You can also share this link directly if needed:' : '.'}
+                  </div>
+                ) : (
+                  <div className="text-[12px] text-[#791F1F] bg-[#fef2f2] px-3 py-2 rounded-lg" style={{ border: '1px solid #fecaca' }}>
+                    The invite was created, but the email couldn't be sent. Share this link with them directly:
+                  </div>
+                )}
+                {lastInviteLink && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ border: '1px solid #e4e4e7', background: '#fafafa' }}>
+                    <div className="flex-1 text-[12px] text-[#52525b] truncate font-mono">{lastInviteLink}</div>
+                    <button onClick={copyLink} className="flex-shrink-0 text-[#2563eb] cursor-pointer">
+                      {copied ? <Check size={14} /> : <Copy size={14} />}
+                    </button>
+                  </div>
+                )}
                 <div className="text-[11px] text-[#a1a1aa]">This link expires in 24 hours and can only be used once.</div>
                 <button
                   onClick={closeInviteModal}

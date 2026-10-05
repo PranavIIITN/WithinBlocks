@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Navigate, Link } from 'react-router-dom'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
 import { INDIAN_STATES } from '../constants/indianStates'
 
 export default function Register() {
   const navigate = useNavigate()
-  const { setAuth } = useAuthStore()
+  const { token, setAuth } = useAuthStore()
   const [form, setForm] = useState({
     companyName: '',
     state: '',
@@ -17,6 +17,12 @@ export default function Register() {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Already signed in — skip the form, same reasoning as AppLayout's guard.
+  // Placed after every hook above (never before) so hook call order stays
+  // identical across renders — putting this earlier, before useState calls,
+  // would violate React's Rules of Hooks.
+  if (token) return <Navigate to="/" replace />
 
   const handleSubmit = async (e) => {
     e.preventDefault()

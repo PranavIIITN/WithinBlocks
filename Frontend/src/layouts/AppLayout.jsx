@@ -1,7 +1,8 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { LayoutDashboard, Package, Users, FileText, BarChart2, Settings, LogOut, HelpCircle, UserCog } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import AgentPanel from '../components/agent/AgentPanel'
+import Landing from '../pages/Landing'
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -16,8 +17,25 @@ const bottomItems = [
 ]
 
 export default function AppLayout() {
-  const { user, logout } = useAuthStore()
+  const { user, token, logout } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // No route-level auth check exists elsewhere in the app, so it lives here
+  // — AppLayout is the parent for every app route ("/", "/products",
+  // "/invoices", etc). Two different outcomes depending on WHERE a signed-out
+  // visitor landed:
+  //   - the bare root ("/")   → show the public landing page in place of the
+  //                             app shell, since that's "someone just found
+  //                             the site" rather than "my session expired"
+  //   - any other app path    → bounce to /login, same as a deep link into
+  //                             a logged-out session always should
+  // This only ever runs for a signed-out visitor; once `token` exists, this
+  // whole block is skipped and the real app renders exactly as before.
+  if (!token) {
+    if (location.pathname === '/') return <Landing />
+    return <Navigate to="/login" replace />
+  }
 
   const handleLogout = () => {
     logout()

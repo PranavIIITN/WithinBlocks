@@ -1,5 +1,6 @@
 import { inviteUser, acceptInvite, listUsers, deactivateUser } from "./user.service.js";
 import { inviteSchema, acceptInviteSchema } from "./user.schemas.js";
+import { sendInviteEmail } from "../email/email.service.js";
 
 const inviteUserController = async (req, res, next) => {
   try {
@@ -9,21 +10,42 @@ const inviteUserController = async (req, res, next) => {
     }
 
     const companyId = req.user.companyId;
-    const { user, inviteLink, reinvited } = await inviteUser(companyId, parsed.data.email);
+    const { user, inviteLink, reinvited, companyName } = await inviteUser(companyId, parsed.data.email);
 
-    // Always logged server-side — this is the only place the token is
-    // durably recorded while there's no email service (PRD §7.2). Log
-    // before responding, not after, so nothing is lost if the response
-    // write itself somehow fails.
+    // Always logged server-side, regardless of email outcome — kept as the
+    // fallback record in case a send silently fails without throwing
+    // (shouldn't happen, but costs nothing to keep).
     console.log(`[invite] ${user.email}: ${inviteLink}`);
+
+    let emailSent = true;
+    let emailError = null;
+    try {
+      await sendInviteEmail({ to: user.email, companyName, inviteLink });
+    } catch (err) {
+      // The invite (and its token) already exist in the database — a
+      // failed send shouldn't fail the whole request, just be surfaced so
+      // the owner knows to deliver the link another way instead of
+      // assuming it went out.
+      emailSent = false;
+      emailError = err.message;
+      console.error(`[invite] email send failed for ${user.email}:`, err.message);
+    }
 
     res.status(201).json({
       success: true,
-      message: reinvited ? "Invite resent" : "Invite sent",
+      message: reinvited
+        ? emailSent ? "Invite resent" : "Invite regenerated, but the email could not be sent"
+        : emailSent ? "Invite sent" : "Invite created, but the email could not be sent",
       data: {
         user,
-        // Only surfaced outside production, per PRD §4.6.
-        ...(process.env.NODE_ENV !== "production" ? { inviteLink } : {}),
+        emailSent,
+        // Shown whenever it's actually needed: always in dev, and in
+        // production ONLY when the email failed to send — otherwise a
+        // failed send would leave the owner with an invite nobody can act
+        // on and no way to retrieve the link, worse than the exposure
+        // PRD §4.6 was originally guarding against.
+        ...(process.env.NODE_ENV !== "production" || !emailSent ? { inviteLink } : {}),
+        ...(emailError ? { emailError } : {}),
       },
     });
   } catch (error) {

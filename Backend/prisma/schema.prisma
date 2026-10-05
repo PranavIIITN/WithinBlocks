@@ -37,6 +37,13 @@ model User {
   isActive      Boolean   @default(false)
   inviteToken   String?   @unique
   inviteExpiry  DateTime?
+
+  // Stores a SHA-256 HASH of the reset token, never the raw token — see
+  // auth.service.js. Higher-stakes than inviteToken (this can take over an
+  // already-active account), so it gets the stricter treatment: even a full
+  // database leak wouldn't hand out usable reset tokens.
+  resetPasswordTokenHash String?   @unique
+  resetPasswordExpiry    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
