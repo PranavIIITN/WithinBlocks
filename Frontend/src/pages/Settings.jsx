@@ -95,8 +95,8 @@ export default function Settings() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Topbar */}
-      <div className="flex items-center justify-between px-6 h-[56px] bg-white flex-shrink-0" style={{ borderBottom: '1px solid #e4e4e7' }}>
-        <div className="text-[14px] font-semibold text-[#09090b]">My Company</div>
+      <div className="flex items-center justify-between px-4 lg:px-6 h-[56px] bg-white flex-shrink-0" style={{ borderBottom: '1px solid #E5E7EB' }}>
+        <div className="text-[14px] font-semibold text-[#111827]">My Company</div>
         <div className="flex items-center gap-3">
           {saved && !isEditing && (
             <span className="text-[12px] text-[#16a34a] font-medium">Saved ✓</span>
@@ -104,8 +104,8 @@ export default function Settings() {
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[13px] font-medium text-[#09090b] cursor-pointer"
-              style={{ border: '1px solid #e4e4e7' }}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[13px] font-medium text-[#111827] cursor-pointer"
+              style={{ border: '1px solid #E5E7EB' }}
             >
               <Pencil size={13} />
               Edit
@@ -115,8 +115,8 @@ export default function Settings() {
               <button
                 onClick={handleCancel}
                 disabled={updateMutation.isPending}
-                className="px-4 py-1.5 rounded-lg text-[13px] text-[#09090b] cursor-pointer disabled:opacity-50"
-                style={{ border: '1px solid #e4e4e7' }}
+                className="px-4 py-1.5 rounded-lg text-[13px] text-[#111827] cursor-pointer disabled:opacity-50"
+                style={{ border: '1px solid #E5E7EB' }}
               >
                 Cancel
               </button>
@@ -124,7 +124,7 @@ export default function Settings() {
                 onClick={handleSubmit}
                 disabled={updateMutation.isPending || !isValid}
                 className="px-4 py-1.5 rounded-lg text-[13px] font-medium text-white cursor-pointer disabled:opacity-50"
-                style={{ background: '#2563eb' }}
+                style={{ background: '#4F46E5' }}
               >
                 {updateMutation.isPending ? 'Saving...' : 'Save changes'}
               </button>
@@ -134,19 +134,19 @@ export default function Settings() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6 bg-[#f4f4f5]">
+      <div className="flex-1 overflow-y-auto p-4 pb-24 lg:p-6 bg-[#F9FAFB]">
         <div className="max-w-3xl mx-auto flex flex-col gap-5">
           {isLoading ? (
-            <div className="text-[13px] text-[#71717a]">Loading...</div>
+            <div className="text-[13px] text-[#6B7280]">Loading...</div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-              <div className="bg-white rounded-xl p-5" style={{ border: '1px solid #e4e4e7' }}>
-                <div className="text-[13px] font-semibold text-[#09090b] mb-4">Business details</div>
+              <div className="bg-white rounded-xl p-5 shadow-[0_1px_2px_rgba(16,24,40,0.05),0_1px_3px_rgba(16,24,40,0.06)]">
+                <div className="text-[13px] font-semibold text-[#111827] mb-4">Business details</div>
                 <CompanyDetailsForm form={form} setForm={setForm} disabled={!isEditing} />
               </div>
 
-              <div className="bg-white rounded-xl p-5" style={{ border: '1px solid #e4e4e7' }}>
-                <div className="text-[13px] font-semibold text-[#09090b] mb-4">Branding</div>
+              <div className="bg-white rounded-xl p-5 shadow-[0_1px_2px_rgba(16,24,40,0.05),0_1px_3px_rgba(16,24,40,0.06)]">
+                <div className="text-[13px] font-semibold text-[#111827] mb-4">Branding</div>
                 <LogoSignatureUpload
                   company={company}
                   logoFile={logoFile}

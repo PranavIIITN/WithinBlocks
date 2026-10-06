@@ -49,59 +49,59 @@ export default function Customers() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Topbar */}
-      <div className="flex items-center justify-between px-6 h-[52px] border-b border-[#d1d0c9] bg-white flex-shrink-0">
-        <div className="text-[14px] font-medium text-[#1a1a18]">Customers</div>
+      <div className="flex items-center justify-between px-4 lg:px-6 h-[52px] border-b border-[#E5E7EB] bg-white flex-shrink-0">
+        <div className="text-[14px] font-medium text-[#111827]">Customers</div>
         <button
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#185FA5] text-white text-[13px] font-medium cursor-pointer"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4F46E5] text-white text-[13px] font-medium cursor-pointer"
         >
           + Add customer
         </button>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-4 pb-24 lg:p-6">
 
         {/* Search */}
-        <div className="flex items-center gap-2 bg-white border border-[#b4b2a9] rounded-lg px-3 py-2 mb-4 max-w-sm">
-          <span className="text-[#888780]">🔍</span>
+        <div className="flex items-center gap-2 bg-white border border-[#D1D5DB] rounded-lg px-3 py-2 mb-4 w-full max-w-sm">
+          <span className="text-[#6B7280]">🔍</span>
           <input
             type="text"
             placeholder="Search by name, phone or GSTIN..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 text-[13px] text-[#1a1a18] outline-none bg-transparent placeholder-[#b4b2a9]"
+            className="flex-1 min-w-0 text-[16px] lg:text-[13px] text-[#111827] outline-none bg-transparent placeholder-[#9CA3AF]"
           />
         </div>
 
         {/* Table */}
-        <div className="bg-white border border-[#d1d0c9] rounded-lg overflow-hidden">
-          <table className="w-full border-collapse text-[13px]">
+        <div className="bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
+          <div className="max-lg:overflow-x-auto"><table className="w-full border-collapse text-[13px] max-lg:min-w-[640px]">
             <thead>
-              <tr className="bg-[#fafaf8]">
+              <tr className="bg-[#F9FAFB]">
                 {['Name', 'Email', 'Phone', 'Address', 'State', 'GSTIN', ''].map((h) => (
-                  <th key={h} className="text-left px-4 py-2.5 text-[11px] font-medium text-[#5f5e5a] border-b border-[#d1d0c9]">{h}</th>
+                  <th key={h} className="text-left px-4 py-2.5 text-[11px] font-medium text-[#4B5563] border-b border-[#E5E7EB]">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-[13px] text-[#888780]">Loading...</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-[13px] text-[#6B7280]">Loading...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-[13px] text-[#888780]">No customers found</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-[13px] text-[#6B7280]">No customers found</td></tr>
               ) : (
                 filtered.map((c) => (
-                  <tr key={c.id} className="hover:bg-[#fafaf8] border-b border-[#e8e7e0] last:border-0">
-                    <td className="px-4 py-3 font-medium text-[#1a1a18]">{c.name}</td>
-                    <td className="px-4 py-3 text-[#5f5e5a]">{c.email || '—'}</td>
-                    <td className="px-4 py-3 text-[#5f5e5a]">{c.phone || '—'}</td>
-                    <td className="px-4 py-3 text-[#5f5e5a]">{c.address || '—'}</td>
-                    <td className="px-4 py-3 text-[#5f5e5a]">{c.state || '—'}</td>
-                    <td className="px-4 py-3 font-mono text-[12px] text-[#5f5e5a]">{c.gstin || '—'}</td>
+                  <tr key={c.id} className="hover:bg-[#F9FAFB] border-b border-[#E5E7EB] last:border-0">
+                    <td className="px-4 py-3 font-medium text-[#111827]">{c.name}</td>
+                    <td className="px-4 py-3 text-[#4B5563]">{c.email || '—'}</td>
+                    <td className="px-4 py-3 text-[#4B5563]">{c.phone || '—'}</td>
+                    <td className="px-4 py-3 text-[#4B5563]">{c.address || '—'}</td>
+                    <td className="px-4 py-3 text-[#4B5563]">{c.state || '—'}</td>
+                    <td className="px-4 py-3 font-mono text-[12px] text-[#4B5563]">{c.gstin || '—'}</td>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => deleteMutation.mutate(c.id)}
-                        className="text-[12px] text-[#888780] hover:text-[#791F1F] cursor-pointer"
+                        className="text-[12px] text-[#6B7280] hover:text-[#791F1F] cursor-pointer"
                       >
                         Delete
                       </button>
@@ -110,48 +110,48 @@ export default function Customers() {
                 ))
               )}
             </tbody>
-          </table>
+          </table></div>
         </div>
       </div>
 
       {/* Add customer modal */}
       {showAdd && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl border border-[#d1d0c9] w-[480px] p-6">
+          <div className="bg-white rounded-xl border border-[#E5E7EB] w-[calc(100vw-2rem)] max-w-[480px] max-h-[90dvh] overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-6">
-              <div className="text-[15px] font-medium text-[#1a1a18]">Add customer</div>
-              <button onClick={() => setShowAdd(false)} className="text-[#888780] hover:text-[#1a1a18] cursor-pointer">✕</button>
+              <div className="text-[15px] font-medium text-[#111827]">Add customer</div>
+              <button onClick={() => setShowAdd(false)} className="text-[#6B7280] hover:text-[#111827] cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div>
-                <label className="block text-[12px] font-medium text-[#1a1a18] mb-1.5">Name *</label>
+                <label className="block text-[12px] font-medium text-[#111827] mb-1.5">Name *</label>
                 <input value={form.name} onChange={e => setForm({...form, name: e.target.value})}
-                  className="w-full px-3 py-2 rounded-lg border border-[#b4b2a9] bg-[#fafaf8] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-[#F9FAFB] text-[13px] text-[#111827] outline-none focus:border-[#4F46E5]"
                   required />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[12px] font-medium text-[#1a1a18] mb-1.5">Email</label>
+                  <label className="block text-[12px] font-medium text-[#111827] mb-1.5">Email</label>
                   <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg border border-[#b4b2a9] bg-[#fafaf8] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]" />
+                    className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-[#F9FAFB] text-[13px] text-[#111827] outline-none focus:border-[#4F46E5]" />
                 </div>
                 <div>
-                  <label className="block text-[12px] font-medium text-[#1a1a18] mb-1.5">Phone</label>
+                  <label className="block text-[12px] font-medium text-[#111827] mb-1.5">Phone</label>
                   <input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg border border-[#b4b2a9] bg-[#fafaf8] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]" />
+                    className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-[#F9FAFB] text-[13px] text-[#111827] outline-none focus:border-[#4F46E5]" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[12px] font-medium text-[#1a1a18] mb-1.5">Billing Address</label>
+                <label className="block text-[12px] font-medium text-[#111827] mb-1.5">Billing Address</label>
                 <input value={form.address} onChange={e => setForm({...form, address: e.target.value})}
-                  className="w-full px-3 py-2 rounded-lg border border-[#b4b2a9] bg-[#fafaf8] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]" />
+                  className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-[#F9FAFB] text-[13px] text-[#111827] outline-none focus:border-[#4F46E5]" />
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-[12px] text-[#1a1a18] mb-1.5 cursor-pointer">
+                <label className="flex items-center gap-2 text-[12px] text-[#111827] mb-1.5 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={sameAsBilling}
@@ -163,14 +163,14 @@ export default function Customers() {
                 {!sameAsBilling && (
                   <input value={form.shipToAddress} onChange={e => setForm({...form, shipToAddress: e.target.value})}
                     placeholder="Shipping address"
-                    className="w-full px-3 py-2 rounded-lg border border-[#b4b2a9] bg-[#fafaf8] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]" />
+                    className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-[#F9FAFB] text-[13px] text-[#111827] outline-none focus:border-[#4F46E5]" />
                 )}
               </div>
 
               <div>
-                <label className="block text-[12px] font-medium text-[#1a1a18] mb-1.5">State *</label>
+                <label className="block text-[12px] font-medium text-[#111827] mb-1.5">State *</label>
                 <select value={form.state} onChange={e => setForm({...form, state: e.target.value})}
-                  className="w-full px-3 py-2 rounded-lg border border-[#b4b2a9] bg-[#fafaf8] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-[#F9FAFB] text-[13px] text-[#111827] outline-none focus:border-[#4F46E5]"
                   required>
                   <option value="" disabled>Select state</option>
                   {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -178,10 +178,10 @@ export default function Customers() {
               </div>
 
               <div>
-                <label className="block text-[12px] font-medium text-[#1a1a18] mb-1.5">GSTIN</label>
+                <label className="block text-[12px] font-medium text-[#111827] mb-1.5">GSTIN</label>
                 <input value={form.gstin} onChange={e => setForm({...form, gstin: e.target.value})}
                   placeholder="29AABCM9527A1ZK"
-                  className="w-full px-3 py-2 rounded-lg border border-[#b4b2a9] bg-[#fafaf8] text-[13px] text-[#1a1a18] outline-none focus:border-[#185FA5] font-mono" />
+                  className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-[#F9FAFB] text-[13px] text-[#111827] outline-none focus:border-[#4F46E5] font-mono" />
               </div>
 
               {createMutation.isError && (
@@ -192,11 +192,11 @@ export default function Customers() {
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowAdd(false)}
-                  className="flex-1 py-2 rounded-lg border border-[#b4b2a9] text-[13px] text-[#1a1a18] cursor-pointer">
+                  className="flex-1 py-2 rounded-lg border border-[#D1D5DB] text-[13px] text-[#111827] cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" disabled={createMutation.isPending}
-                  className="flex-1 py-2 rounded-lg bg-[#185FA5] text-white text-[13px] font-medium cursor-pointer disabled:opacity-50">
+                  className="flex-1 py-2 rounded-lg bg-[#4F46E5] text-white text-[13px] font-medium cursor-pointer disabled:opacity-50">
                   {createMutation.isPending ? 'Adding...' : 'Add customer'}
                 </button>
               </div>

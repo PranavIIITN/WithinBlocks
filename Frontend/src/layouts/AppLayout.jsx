@@ -1,5 +1,9 @@
+import { useEffect, useRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
-import { LayoutDashboard, Package, Users, FileText, BarChart2, Settings, LogOut, HelpCircle, UserCog } from 'lucide-react'
+import {
+  LayoutDashboard, Package, Users, FileText, BarChart2, Settings, LogOut, HelpCircle, UserCog,
+  PanelLeftClose, PanelLeftOpen, Menu, X,
+} from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import AgentPanel from '../components/agent/AgentPanel'
 import Landing from '../pages/Landing'
@@ -16,10 +20,102 @@ const bottomItems = [
   { label: 'Settings', icon: Settings, path: '/settings' },
 ]
 
+// Sidebar palette: dark slate, muted text, lighter slate for the active item.
+const SIDEBAR = '#0F172A'
+const SIDEBAR_RAISED = '#1E293B'
+const SIDEBAR_TEXT = '#9CA3AF'
+const STORAGE_KEY = 'wb.sidebar.collapsed'
+
+// Desktop only: a saved choice wins, otherwise the sidebar starts expanded.
+const readCollapsed = () => {
+  try {
+    return localStorage.getItem(STORAGE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+// True from 1024px up (Tailwind's `lg`). Below that the sidebar is a drawer.
+function useIsDesktop() {
+  const query = '(min-width: 1024px)'
+  const [match, setMatch] = useState(() => typeof window !== 'undefined' && window.matchMedia(query).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(query)
+    const onChange = (e) => setMatch(e.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  return match
+}
+
+const ring = 'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#818CF8]'
+
+function NavItem({ to, end, icon: Icon, label, collapsed, onNavigate }) {
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      onClick={onNavigate}
+      title={collapsed ? label : undefined}
+      className={({ isActive }) =>
+        `relative flex items-center h-10 lg:h-9 rounded-lg text-[13px] mb-0.5 transition-colors ${ring} ${
+          collapsed ? 'justify-center' : 'gap-3 px-3'
+        } ${
+          isActive
+            ? 'bg-[#1E293B] text-white font-medium'
+            : 'text-[#9CA3AF] hover:bg-[#1E293B]/60 hover:text-white'
+        }`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          {isActive && <span aria-hidden className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-[#818CF8]" />}
+          <Icon size={16} className="shrink-0" />
+          <span className={collapsed ? 'sr-only' : 'truncate'}>{label}</span>
+        </>
+      )}
+    </NavLink>
+  )
+}
+
 export default function AppLayout() {
   const { user, token, logout } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
+  const [collapsedPref, setCollapsed] = useState(readCollapsed)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const isDesktop = useIsDesktop()
+  const firstRun = useRef(true)
+  // The icon-only rail is a desktop thing; the mobile drawer is always full width.
+  const collapsed = collapsedPref && isDesktop
+
+  // Remember the choice — but only once the person has actually toggled it.
+  useEffect(() => {
+    if (firstRun.current) {
+      firstRun.current = false
+      return
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY, collapsedPref ? '1' : '0')
+    } catch {
+      /* storage unavailable */
+    }
+  }, [collapsedPref])
+
+  // Ctrl/Cmd + B toggles the sidebar.
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault()
+        if (window.matchMedia('(min-width: 1024px)').matches) setCollapsed((c) => !c)
+        else setDrawerOpen((o) => !o)
+      } else if (e.key === 'Escape') {
+        setDrawerOpen(false)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // No route-level auth check exists elsewhere in the app, so it lives here
   // — AppLayout is the parent for every app route ("/", "/products",
@@ -32,122 +128,170 @@ export default function AppLayout() {
   //                             a logged-out session always should
   // This only ever runs for a signed-out visitor; once `token` exists, this
   // whole block is skipped and the real app renders exactly as before.
+  // (Kept after every hook above so hook order never changes between renders.)
   if (!token) {
     if (location.pathname === '/') return <Landing />
     return <Navigate to="/login" replace />
   }
 
   const handleLogout = () => {
+    setDrawerOpen(false)
     logout()
     navigate('/login')
   }
+  const closeDrawer = () => setDrawerOpen(false)
+
+  const initial = user?.name?.charAt(0).toUpperCase() || 'P'
+  const ToggleIcon = !isDesktop ? X : collapsed ? PanelLeftOpen : PanelLeftClose
+  const toggleLabel = !isDesktop ? 'Close menu' : collapsed ? 'Expand sidebar' : 'Collapse sidebar'
+  const toggleBtn = (
+    <button
+      type="button"
+      onClick={() => (isDesktop ? setCollapsed((c) => !c) : setDrawerOpen(false))}
+      aria-label={toggleLabel}
+      aria-expanded={isDesktop ? !collapsed : undefined}
+      title={isDesktop ? `${toggleLabel} (Ctrl+B)` : toggleLabel}
+      className={`p-1.5 rounded-md text-[#9CA3AF] hover:text-white hover:bg-[#1E293B] transition-colors cursor-pointer ${ring}`}
+    >
+      <ToggleIcon size={16} />
+    </button>
+  )
 
   return (
-    <div className="flex h-screen bg-[#f4f4f5]" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className="flex h-dvh bg-[#F9FAFB]" style={{ fontFamily: 'Inter, sans-serif' }}>
+
+      {/* Mobile: dimmed backdrop behind the drawer */}
+      <div
+        aria-hidden
+        onClick={closeDrawer}
+        className={`fixed inset-0 z-[55] bg-slate-950/50 transition-opacity duration-200 motion-reduce:transition-none lg:hidden ${drawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      />
 
       {/* Sidebar */}
-      <div className="w-[210px] bg-white flex flex-col flex-shrink-0" style={{ borderRight: '1px solid #e4e4e7' }}>
+      <aside
+        aria-label="Primary"
+        className={`fixed inset-y-0 left-0 z-[60] w-[280px] max-w-[85vw] transition-transform duration-200 ease-out ${drawerOpen ? 'translate-x-0' : '-translate-x-full'} lg:static lg:z-auto lg:max-w-none lg:translate-x-0 ${collapsed ? 'lg:w-[68px]' : 'lg:w-[232px]'} flex flex-col flex-shrink-0 lg:transition-[width] motion-reduce:transition-none`}
+        style={{ background: SIDEBAR }}
+        inert={!isDesktop && !drawerOpen ? true : undefined}
+      >
 
-        {/* Logo */}
-        <div className="px-5 py-5">
-          <div className="text-[15px] font-semibold text-[#09090b] tracking-tight">
-            within<span style={{ color: '#2563eb' }}>blocks</span>
+        {/* Logo + toggle */}
+        {collapsed ? (
+          <div className="flex flex-col items-center gap-3 pt-5 pb-3">
+            <div className="text-[15px] font-semibold text-white tracking-tight" title="WithinBlocks">
+              w<span style={{ color: '#A5B4FC' }}>b</span>
+            </div>
+            {toggleBtn}
           </div>
-          <div className="text-[11px] text-[#71717a] mt-0.5">Run your business, block by block.</div>
-        </div>
+        ) : (
+          <div className="flex items-start justify-between pl-5 pr-3 pt-5 pb-3">
+            <div className="min-w-0">
+              <div className="text-[15px] font-semibold text-white tracking-tight">
+                within<span style={{ color: '#A5B4FC' }}>blocks</span>
+              </div>
+              <div className="text-[11px] mt-0.5 leading-snug" style={{ color: '#6B7280' }}>Run your business, block by block.</div>
+            </div>
+            {toggleBtn}
+          </div>
+        )}
 
         {/* Nav */}
-        <div className="flex-1 px-3 py-2">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.path === '/'}
-                className={({ isActive }) =>
-                  `flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] mb-0.5 transition-colors ${
-                    isActive
-                      ? 'bg-[#eff6ff] text-[#2563eb] font-medium'
-                      : 'text-[#52525b] hover:bg-[#f4f4f5] hover:text-[#09090b]'
-                  }`
-                }
-              >
-                <Icon size={15} />
-                {item.label}
-              </NavLink>
-            )
-          })}
+        <nav className="flex-1 px-3 py-2 overflow-y-auto">
+          {navItems.map((item) => (
+            <NavItem key={item.path} to={item.path} end={item.path === '/'} icon={item.icon} label={item.label} collapsed={collapsed} onNavigate={closeDrawer} />
+          ))}
 
           {/* Owner-only — matches backend authorizeOwner on every /users route */}
           {user?.role === 'OWNER' && (
-            <NavLink
-              to="/team"
-              className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] mb-0.5 transition-colors ${
-                  isActive
-                    ? 'bg-[#eff6ff] text-[#2563eb] font-medium'
-                    : 'text-[#52525b] hover:bg-[#f4f4f5] hover:text-[#09090b]'
-                }`
-              }
-            >
-              <UserCog size={15} />
-              Team
-            </NavLink>
+            <NavItem to="/team" icon={UserCog} label="Team" collapsed={collapsed} onNavigate={closeDrawer} />
           )}
 
-          <div className="h-px bg-[#e4e4e7] my-3" />
+          <div className="h-px my-3" style={{ background: SIDEBAR_RAISED }} />
 
-          {bottomItems.map((item) => {
-            const Icon = item.icon
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) =>
-                  `flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] mb-0.5 transition-colors ${
-                    isActive
-                      ? 'bg-[#eff6ff] text-[#2563eb] font-medium'
-                      : 'text-[#52525b] hover:bg-[#f4f4f5] hover:text-[#09090b]'
-                  }`
-                }
-              >
-                <Icon size={15} />
-                {item.label}
-              </NavLink>
-            )
-          })}
-        </div>
+          {bottomItems.map((item) => (
+            <NavItem key={item.path} to={item.path} icon={item.icon} label={item.label} collapsed={collapsed} onNavigate={closeDrawer} />
+          ))}
+        </nav>
 
         {/* Help */}
         <div className="px-3 pb-2">
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] text-[#52525b] cursor-pointer hover:bg-[#f4f4f5]">
-            <HelpCircle size={15} />
-            Need help?
-          </div>
+          <button
+            type="button"
+            title={collapsed ? 'Need help?' : undefined}
+            className={`w-full flex items-center h-9 rounded-lg text-[13px] hover:bg-[#1E293B]/60 hover:text-white transition-colors cursor-pointer ${ring} ${collapsed ? 'justify-center' : 'gap-3 px-3'}`}
+            style={{ color: SIDEBAR_TEXT }}
+          >
+            <HelpCircle size={16} className="shrink-0" />
+            <span className={collapsed ? 'sr-only' : ''}>Need help?</span>
+          </button>
         </div>
 
         {/* User */}
-        <div className="px-3 pb-4 pt-2" style={{ borderTop: '1px solid #e4e4e7' }}>
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-[#f4f4f5] cursor-pointer group">
-            <div className="w-7 h-7 rounded-full bg-[#dbeafe] flex items-center justify-center text-[11px] font-semibold text-[#2563eb] flex-shrink-0">
-              {user?.name?.charAt(0).toUpperCase() || 'P'}
+        <div className="px-3 pb-4 pt-3" style={{ borderTop: `1px solid ${SIDEBAR_RAISED}` }}>
+          {collapsed ? (
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold"
+                style={{ background: SIDEBAR_RAISED, color: '#C7D2FE' }}
+                title={user?.name || 'User'}
+              >
+                {initial}
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                aria-label="Sign out"
+                title="Sign out"
+                className={`p-1.5 rounded-md hover:text-white hover:bg-[#1E293B] transition-colors cursor-pointer ${ring}`}
+                style={{ color: SIDEBAR_TEXT }}
+              >
+                <LogOut size={15} />
+              </button>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[12px] font-medium text-[#09090b] truncate">{user?.name || 'User'}</div>
-              <div className="text-[11px] text-[#71717a] capitalize">{user?.role?.toLowerCase() || 'owner'}</div>
+          ) : (
+            <div className="flex items-center gap-2.5 px-2 py-1.5">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold flex-shrink-0"
+                style={{ background: SIDEBAR_RAISED, color: '#C7D2FE' }}
+              >
+                {initial}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[12.5px] font-medium text-white truncate">{user?.name || 'User'}</div>
+                <div className="text-[11px] capitalize" style={{ color: SIDEBAR_TEXT }}>{user?.role?.toLowerCase() || 'owner'}</div>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                aria-label="Sign out"
+                title="Sign out"
+                className={`p-1.5 rounded-md hover:text-white hover:bg-[#1E293B] transition-colors cursor-pointer flex-shrink-0 ${ring}`}
+                style={{ color: SIDEBAR_TEXT }}
+              >
+                <LogOut size={15} />
+              </button>
             </div>
-            <LogOut
-              size={14}
-              className="text-[#a1a1aa] group-hover:text-[#52525b] cursor-pointer flex-shrink-0"
-              onClick={handleLogout}
-            />
-          </div>
+          )}
         </div>
-      </div>
+      </aside>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-[#F9FAFB]">
+        {/* Mobile-only header: menu button + logo. Desktop never sees it. */}
+        <header className="lg:hidden flex items-center gap-3 h-14 px-4 bg-white flex-shrink-0" style={{ borderBottom: '1px solid #E5E7EB' }}>
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open menu"
+            aria-expanded={drawerOpen}
+            className="-ml-2 p-2 rounded-lg text-[#4B5563] hover:bg-[#F3F4F6] transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#4F46E5]"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="text-[15px] font-semibold tracking-tight text-[#111827]">
+            within<span style={{ color: '#4F46E5' }}>blocks</span>
+          </div>
+        </header>
         <Outlet />
       </div>
 

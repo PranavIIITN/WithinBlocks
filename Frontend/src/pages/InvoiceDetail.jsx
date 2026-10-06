@@ -10,8 +10,8 @@ const STATUS_STYLES = {
   UNPAID: { bg: '#FAEEDA', text: '#633806' },
   PAID: { bg: '#EAF3DE', text: '#27500A' },
   OVERDUE: { bg: '#fef2f2', text: '#ef4444' },
-  DRAFT: { bg: '#f4f4f5', text: '#71717a', border: '1px solid #e4e4e7' },
-  CANCELLED: { bg: '#f4f4f5', text: '#a1a1aa' },
+  DRAFT: { bg: '#F3F4F6', text: '#6B7280', border: '1px solid #E5E7EB' },
+  CANCELLED: { bg: '#F3F4F6', text: '#9CA3AF' },
 }
 
 const formatDate = (date) =>
@@ -87,7 +87,7 @@ export default function InvoiceDetail() {
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center h-full">
-        <div className="text-[13px] text-[#71717a]">Loading invoice...</div>
+        <div className="text-[13px] text-[#6B7280]">Loading invoice...</div>
       </div>
     )
   }
@@ -95,8 +95,8 @@ export default function InvoiceDetail() {
   if (isError || !invoice) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-full gap-3">
-        <div className="text-[13px] text-[#71717a]">Invoice not found</div>
-        <button onClick={() => navigate('/invoices')} className="text-[13px] text-[#2563eb] cursor-pointer hover:underline">
+        <div className="text-[13px] text-[#6B7280]">Invoice not found</div>
+        <button onClick={() => navigate('/invoices')} className="text-[13px] text-[#4F46E5] cursor-pointer hover:underline">
           ← Back to invoices
         </button>
       </div>
@@ -118,13 +118,13 @@ export default function InvoiceDetail() {
       `}</style>
 
       {/* Topbar */}
-      <div className="no-print flex items-center justify-between px-6 h-[56px] bg-white flex-shrink-0" style={{ borderBottom: '1px solid #e4e4e7' }}>
+      <div className="no-print flex items-center justify-between px-4 lg:px-6 min-h-[56px] max-lg:py-2 max-lg:flex-wrap max-lg:gap-y-2 bg-white flex-shrink-0" style={{ borderBottom: '1px solid #E5E7EB' }}>
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/invoices')} className="text-[#71717a] hover:text-[#09090b] cursor-pointer flex items-center">
+          <button onClick={() => navigate('/invoices')} className="text-[#6B7280] hover:text-[#111827] cursor-pointer flex items-center">
             <ArrowLeft size={18} />
           </button>
-          <span style={{ color: '#e4e4e7' }}>|</span>
-          <div className="text-[16px] font-semibold text-[#09090b]">{invoice.invoiceNo}</div>
+          <span style={{ color: '#E5E7EB' }}>|</span>
+          <div className="text-[16px] font-semibold text-[#111827]">{invoice.invoiceNo}</div>
           <span
             className="text-[11px] font-medium px-2 py-0.5 rounded uppercase tracking-wide"
             style={{ background: badge.bg, color: badge.text, border: badge.border }}
@@ -139,7 +139,7 @@ export default function InvoiceDetail() {
               onClick={() => statusMutation.mutate('UNPAID')}
               disabled={statusMutation.isPending}
               className="px-3 py-1.5 rounded-lg text-[13px] font-medium text-white cursor-pointer disabled:opacity-50"
-              style={{ background: '#2563eb' }}
+              style={{ background: '#4F46E5' }}
             >
               Finalize invoice
             </button>
@@ -158,39 +158,39 @@ export default function InvoiceDetail() {
           <button
             onClick={() => downloadPdfMutation.mutate()}
             disabled={downloadPdfMutation.isPending}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] text-[#09090b] cursor-pointer disabled:opacity-50"
-            style={{ border: '1px solid #e4e4e7' }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] text-[#111827] cursor-pointer disabled:opacity-50"
+            style={{ border: '1px solid #E5E7EB' }}
           >
             <Download size={14} />
-            {downloadPdfMutation.isPending ? 'Downloading...' : 'Download PDF'}
+            <span className="hidden sm:inline">{downloadPdfMutation.isPending ? 'Downloading...' : 'Download PDF'}</span>
           </button>
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] text-[#09090b] cursor-pointer"
-            style={{ border: '1px solid #e4e4e7' }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] text-[#111827] cursor-pointer"
+            style={{ border: '1px solid #E5E7EB' }}
           >
             <Printer size={14} />
-            Print
+            <span className="hidden sm:inline">Print</span>
           </button>
 
           <div className="relative">
             <button
               onClick={() => setShowMenu(s => !s)}
-              className="p-1.5 rounded-lg text-[#71717a] hover:text-[#09090b] cursor-pointer"
-              style={{ border: '1px solid #e4e4e7' }}
+              className="p-1.5 rounded-lg text-[#6B7280] hover:text-[#111827] cursor-pointer"
+              style={{ border: '1px solid #E5E7EB' }}
             >
               <MoreVertical size={16} />
             </button>
             {showMenu && (
               <div
                 className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg z-20 overflow-hidden"
-                style={{ border: '1px solid #e4e4e7', minWidth: '160px' }}
+                style={{ border: '1px solid #E5E7EB', minWidth: '160px' }}
                 onMouseLeave={() => setShowMenu(false)}
               >
                 {invoice.status !== 'CANCELLED' && invoice.status !== 'DRAFT' && (
                   <button
                     onClick={() => { setShowMenu(false); statusMutation.mutate('CANCELLED') }}
-                    className="w-full flex items-center gap-2 px-4 py-2.5 text-[13px] text-[#09090b] hover:bg-[#f4f4f5] cursor-pointer text-left"
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-[13px] text-[#111827] hover:bg-[#F3F4F6] cursor-pointer text-left"
                   >
                     <Ban size={14} />
                     Cancel invoice
@@ -211,11 +211,11 @@ export default function InvoiceDetail() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto print-area">
-        <div className="max-w-5xl mx-auto p-6">
-          <div className="rounded-lg p-8" style={{ border: '1px solid #e4e4e7' }}>
+        <div className="max-w-5xl mx-auto p-3 sm:p-6">
+          <div className="rounded-lg p-4 sm:p-8" style={{ border: '1px solid #E5E7EB' }}>
 
             {/* Header: company + invoice title */}
-            <div className="flex items-start justify-between mb-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
               <div className="flex items-start gap-4">
                 {company?.logo && (
                   <img
@@ -226,59 +226,60 @@ export default function InvoiceDetail() {
                   />
                 )}
                 <div>
-                  <div className="text-[16px] font-semibold text-[#09090b]">{company?.name || 'Your Company'}</div>
-                  {company?.address && <div className="text-[12px] text-[#71717a] mt-0.5 max-w-xs">{company.address}</div>}
-                  {company?.phone && <div className="text-[12px] text-[#71717a]">{company.phone}</div>}
-                  {company?.email && <div className="text-[12px] text-[#71717a]">{company.email}</div>}
-                  {company?.gstin && <div className="text-[12px] text-[#71717a]">GSTIN: {company.gstin}</div>}
-                  {company?.state && <div className="text-[12px] text-[#71717a]">State: {company.state}</div>}
+                  <div className="text-[16px] font-semibold text-[#111827]">{company?.name || 'Your Company'}</div>
+                  {company?.address && <div className="text-[12px] text-[#6B7280] mt-0.5 max-w-xs">{company.address}</div>}
+                  {company?.phone && <div className="text-[12px] text-[#6B7280]">{company.phone}</div>}
+                  {company?.email && <div className="text-[12px] text-[#6B7280]">{company.email}</div>}
+                  {company?.gstin && <div className="text-[12px] text-[#6B7280]">GSTIN: {company.gstin}</div>}
+                  {company?.state && <div className="text-[12px] text-[#6B7280]">State: {company.state}</div>}
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-[20px] font-bold text-[#09090b] tracking-tight">TAX INVOICE</div>
+              <div className="sm:text-right">
+                <div className="text-[20px] font-bold text-[#111827] tracking-tight">TAX INVOICE</div>
               </div>
             </div>
 
             {/* Bill to + Ship to + dates */}
-            <div className="grid grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
               <div>
-                <div className="text-[11px] font-semibold text-[#71717a] uppercase tracking-wide mb-2">Bill To</div>
-                <div className="text-[13px] font-medium text-[#09090b]">{invoice.customer?.name}</div>
-                {invoice.customer?.address && <div className="text-[12px] text-[#71717a] mt-1 max-w-xs">{invoice.customer.address}</div>}
-                {invoice.customer?.phone && <div className="text-[12px] text-[#71717a]">{invoice.customer.phone}</div>}
-                {invoice.customer?.email && <div className="text-[12px] text-[#71717a]">{invoice.customer.email}</div>}
+                <div className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-2">Bill To</div>
+                <div className="text-[13px] font-medium text-[#111827]">{invoice.customer?.name}</div>
+                {invoice.customer?.address && <div className="text-[12px] text-[#6B7280] mt-1 max-w-xs">{invoice.customer.address}</div>}
+                {invoice.customer?.phone && <div className="text-[12px] text-[#6B7280]">{invoice.customer.phone}</div>}
+                {invoice.customer?.email && <div className="text-[12px] text-[#6B7280]">{invoice.customer.email}</div>}
                 {invoice.customer?.gstin && (
-                  <div className="mt-2 inline-flex items-center px-2 py-1 rounded text-[11px] font-mono text-[#52525b]" style={{ background: '#f4f4f5', border: '1px solid #e4e4e7' }}>
+                  <div className="mt-2 inline-flex items-center px-2 py-1 rounded text-[11px] font-mono text-[#4B5563]" style={{ background: '#F3F4F6', border: '1px solid #E5E7EB' }}>
                     GSTIN {invoice.customer.gstin}
                   </div>
                 )}
               </div>
               <div>
-                <div className="text-[11px] font-semibold text-[#71717a] uppercase tracking-wide mb-2">Ship To</div>
-                <div className="text-[13px] font-medium text-[#09090b]">{invoice.customer?.name}</div>
+                <div className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-2">Ship To</div>
+                <div className="text-[13px] font-medium text-[#111827]">{invoice.customer?.name}</div>
                 {/* Falls back to the billing address for customers created before
                     shipToAddress existed — those rows are NULL, not auto-copied. */}
-                <div className="text-[12px] text-[#71717a] mt-1 max-w-xs">
+                <div className="text-[12px] text-[#6B7280] mt-1 max-w-xs">
                   {invoice.customer?.shipToAddress || invoice.customer?.address || '—'}
                 </div>
               </div>
               <div className="text-right">
                 <div className="flex justify-end gap-8 text-[13px] mb-1.5">
-                  <span className="text-[#71717a]">Invoice No.</span>
-                  <span className="text-[#09090b] font-medium w-28">{invoice.invoiceNo}</span>
+                  <span className="text-[#6B7280]">Invoice No.</span>
+                  <span className="text-[#111827] font-medium w-28">{invoice.invoiceNo}</span>
                 </div>
                 <div className="flex justify-end gap-8 text-[13px]">
-                  <span className="text-[#71717a]">Invoice Date</span>
-                  <span className="text-[#09090b] font-medium w-28">{formatDate(invoice.createdAt)}</span>
+                  <span className="text-[#6B7280]">Invoice Date</span>
+                  <span className="text-[#111827] font-medium w-28">{formatDate(invoice.createdAt)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Items table */}
-            <div className="mb-6 rounded-lg overflow-hidden" style={{ border: '1px solid #e4e4e7' }}>
+            {/* Items table — scrolls sideways on phones only, so print layout is unchanged */}
+            <div className="mb-6 max-sm:overflow-x-auto">
+            <div className="rounded-lg overflow-hidden max-sm:min-w-[760px]" style={{ border: '1px solid #E5E7EB' }}>
               <div
-                className="grid text-[11px] font-semibold text-[#71717a] uppercase tracking-wide px-4 py-2.5 bg-[#fafafa]"
-                style={{ gridTemplateColumns: INVOICE_ITEM_GRID_COLS, gap: '8px', borderBottom: '1px solid #e4e4e7' }}
+                className="grid text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide px-4 py-2.5 bg-[#F9FAFB]"
+                style={{ gridTemplateColumns: INVOICE_ITEM_GRID_COLS, gap: '8px', borderBottom: '1px solid #E5E7EB' }}
               >
                 <div>HSN Code</div>
                 <div>Item</div>
@@ -302,82 +303,83 @@ export default function InvoiceDetail() {
                   style={{
                     gridTemplateColumns: INVOICE_ITEM_GRID_COLS,
                     gap: '8px',
-                    borderBottom: index === invoice.items.length - 1 ? 'none' : '1px solid #f4f4f5',
+                    borderBottom: index === invoice.items.length - 1 ? 'none' : '1px solid #F3F4F6',
                   }}
                 >
-                  <div className="text-[12px] text-[#52525b]">{item.product?.hsn || '—'}</div>
-                  <div className="font-medium text-[#09090b] truncate" title={item.product?.name}>{item.product?.name}</div>
-                  <div className="text-right text-[#52525b]">{item.quantity}</div>
-                  <div className="text-right text-[#52525b]">{formatMoney(item.unitPrice)}</div>
-                  <div className="text-right text-[#52525b]">{formatMoney(preTax)}</div>
-                  <div className="text-right text-[#52525b]">{item.tax}%</div>
-                  <div className="text-right text-[12px] text-[#52525b]">{item.cgst > 0 ? formatMoney(item.cgst) : '—'}</div>
-                  <div className="text-right text-[12px] text-[#52525b]">{item.sgst > 0 ? formatMoney(item.sgst) : '—'}</div>
-                  <div className="text-right text-[12px] text-[#52525b]">{item.igst > 0 ? formatMoney(item.igst) : '—'}</div>
-                  <div className="text-right font-medium text-[#09090b]">{formatMoney(item.total)}</div>
+                  <div className="text-[12px] text-[#4B5563]">{item.product?.hsn || '—'}</div>
+                  <div className="font-medium text-[#111827] truncate" title={item.product?.name}>{item.product?.name}</div>
+                  <div className="text-right text-[#4B5563]">{item.quantity}</div>
+                  <div className="text-right text-[#4B5563]">{formatMoney(item.unitPrice)}</div>
+                  <div className="text-right text-[#4B5563]">{formatMoney(preTax)}</div>
+                  <div className="text-right text-[#4B5563]">{item.tax}%</div>
+                  <div className="text-right text-[12px] text-[#4B5563]">{item.cgst > 0 ? formatMoney(item.cgst) : '—'}</div>
+                  <div className="text-right text-[12px] text-[#4B5563]">{item.sgst > 0 ? formatMoney(item.sgst) : '—'}</div>
+                  <div className="text-right text-[12px] text-[#4B5563]">{item.igst > 0 ? formatMoney(item.igst) : '—'}</div>
+                  <div className="text-right font-medium text-[#111827]">{formatMoney(item.total)}</div>
                 </div>
                 )
               })}
             </div>
+            </div>
 
             {/* Notes + Totals */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 {invoice.notes && (
                   <div>
-                    <div className="text-[11px] font-semibold text-[#71717a] uppercase tracking-wide mb-1.5">Notes</div>
-                    <div className="text-[13px] text-[#52525b]">{invoice.notes}</div>
+                    <div className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-1.5">Notes</div>
+                    <div className="text-[13px] text-[#4B5563]">{invoice.notes}</div>
                   </div>
                 )}
               </div>
               <div>
-                <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #e4e4e7' }}>
-                  <div className="flex justify-between px-4 py-2.5 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
-                    <span className="text-[#71717a]">Subtotal</span>
-                    <span className="text-[#09090b]">{formatMoney(invoice.subtotal)}</span>
+                <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E5E7EB' }}>
+                  <div className="flex justify-between px-4 py-2.5 text-[13px]" style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    <span className="text-[#6B7280]">Subtotal</span>
+                    <span className="text-[#111827]">{formatMoney(invoice.subtotal)}</span>
                   </div>
                   {hasCgstSgst && (
                     <>
-                      <div className="flex justify-between px-4 py-2.5 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
-                        <span className="text-[#71717a]">CGST</span>
-                        <span className="text-[#09090b]">{formatMoney(invoice.cgst)}</span>
+                      <div className="flex justify-between px-4 py-2.5 text-[13px]" style={{ borderBottom: '1px solid #E5E7EB' }}>
+                        <span className="text-[#6B7280]">CGST</span>
+                        <span className="text-[#111827]">{formatMoney(invoice.cgst)}</span>
                       </div>
-                      <div className="flex justify-between px-4 py-2.5 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
-                        <span className="text-[#71717a]">SGST</span>
-                        <span className="text-[#09090b]">{formatMoney(invoice.sgst)}</span>
+                      <div className="flex justify-between px-4 py-2.5 text-[13px]" style={{ borderBottom: '1px solid #E5E7EB' }}>
+                        <span className="text-[#6B7280]">SGST</span>
+                        <span className="text-[#111827]">{formatMoney(invoice.sgst)}</span>
                       </div>
                     </>
                   )}
                   {hasIgst && (
-                    <div className="flex justify-between px-4 py-2.5 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
-                      <span className="text-[#71717a]">IGST</span>
-                      <span className="text-[#09090b]">{formatMoney(invoice.igst)}</span>
+                    <div className="flex justify-between px-4 py-2.5 text-[13px]" style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      <span className="text-[#6B7280]">IGST</span>
+                      <span className="text-[#111827]">{formatMoney(invoice.igst)}</span>
                     </div>
                   )}
                   {!hasCgstSgst && !hasIgst && (
-                    <div className="flex justify-between px-4 py-2.5 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
-                      <span className="text-[#71717a]">Tax</span>
-                      <span className="text-[#09090b]">{formatMoney(invoice.taxAmount)}</span>
+                    <div className="flex justify-between px-4 py-2.5 text-[13px]" style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      <span className="text-[#6B7280]">Tax</span>
+                      <span className="text-[#111827]">{formatMoney(invoice.taxAmount)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between px-4 py-3" style={{ background: '#fafafa' }}>
-                    <span className="text-[14px] font-bold text-[#09090b]">Total</span>
-                    <span className="text-[14px] font-bold text-[#09090b]">{formatMoney(invoice.totalAmount)}</span>
+                  <div className="flex justify-between px-4 py-3" style={{ background: '#F9FAFB' }}>
+                    <span className="text-[14px] font-bold text-[#111827]">Total</span>
+                    <span className="text-[14px] font-bold text-[#111827]">{formatMoney(invoice.totalAmount)}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Invoice Total In Words */}
-            <div className="mt-5 pt-4" style={{ borderTop: '1px solid #e4e4e7' }}>
-              <div className="text-[11px] font-semibold text-[#71717a] uppercase tracking-wide mb-1">Invoice Total In Words</div>
-              <div className="text-[13px] text-[#09090b] font-medium">{amountToWords(invoice.totalAmount)}</div>
+            <div className="mt-5 pt-4" style={{ borderTop: '1px solid #E5E7EB' }}>
+              <div className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-1">Invoice Total In Words</div>
+              <div className="text-[13px] text-[#111827] font-medium">{amountToWords(invoice.totalAmount)}</div>
             </div>
 
             {/* Signature — bottom right, matching a standard tax invoice layout */}
             <div className="flex justify-end mt-10">
               <div className="text-center" style={{ minWidth: '180px' }}>
-                <div className="text-[12px] font-semibold text-[#09090b] mb-2">
+                <div className="text-[12px] font-semibold text-[#111827] mb-2">
                   For {company?.name || 'Your Company'}
                 </div>
                 {company?.signature ? (
@@ -391,8 +393,8 @@ export default function InvoiceDetail() {
                   <div style={{ height: '60px' }} />
                 )}
                 <div
-                  className="text-[11px] text-[#71717a] mt-1 pt-1.5"
-                  style={{ borderTop: '1px solid #e4e4e7' }}
+                  className="text-[11px] text-[#6B7280] mt-1 pt-1.5"
+                  style={{ borderTop: '1px solid #E5E7EB' }}
                 >
                   Authorized Signatory
                 </div>

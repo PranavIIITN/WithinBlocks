@@ -29,14 +29,14 @@ function UploadBox({ label, hint, savedUrl, file, onFileSelect, disabled }) {
 
   return (
     <div>
-      <div className="text-[13px] font-semibold text-[#09090b] mb-1">{label}</div>
-      <div className="text-[11px] text-[#71717a] mb-3">{hint}</div>
+      <div className="text-[13px] font-semibold text-[#111827] mb-1">{label}</div>
+      <div className="text-[11px] text-[#6B7280] mb-3">{hint}</div>
       <div
         className="relative rounded-xl overflow-hidden flex flex-col items-center justify-center"
         style={{
-          border: '2px dashed #e4e4e7',
+          border: '2px dashed #E5E7EB',
           height: '160px',
-          background: displaySrc ? '#fff' : (disabled ? '#f4f4f5' : '#fafafa'),
+          background: displaySrc ? '#fff' : (disabled ? '#F3F4F6' : '#F9FAFB'),
           cursor: disabled ? 'not-allowed' : 'pointer',
         }}
         onClick={() => !disabled && fileInputRef.current.click()}
@@ -52,11 +52,11 @@ function UploadBox({ label, hint, savedUrl, file, onFileSelect, disabled }) {
           />
         ) : (
           <>
-            <div className="w-10 h-10 rounded-xl bg-[#eff6ff] flex items-center justify-center mb-2">
-              <ImageIcon size={18} className="text-[#2563eb]" />
+            <div className="w-10 h-10 rounded-xl bg-[#EEF2FF] flex items-center justify-center mb-2">
+              <ImageIcon size={18} className="text-[#4F46E5]" />
             </div>
-            <div className="text-[12px] font-medium text-[#09090b]">Upload</div>
-            <div className="text-[10px] text-[#a1a1aa] mt-1">PNG, JPG, WEBP up to 5MB</div>
+            <div className="text-[12px] font-medium text-[#111827]">Upload</div>
+            <div className="text-[10px] text-[#9CA3AF] mt-1">PNG, JPG, WEBP up to 5MB</div>
           </>
         )}
 
@@ -70,7 +70,7 @@ function UploadBox({ label, hint, savedUrl, file, onFileSelect, disabled }) {
         {file && (
           <div
             className="absolute top-2 right-2 text-[10px] font-medium px-1.5 py-0.5 rounded"
-            style={{ background: '#eff6ff', color: '#2563eb' }}
+            style={{ background: '#EEF2FF', color: '#4F46E5' }}
           >
             Pending — save to apply
           </div>
@@ -101,7 +101,7 @@ export default function LogoSignatureUpload({
   disabled = false,
 }) {
   return (
-    <div className="grid grid-cols-2 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
       <UploadBox
         label="Company logo"
         hint="Shown at the top of every invoice"

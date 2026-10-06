@@ -61,30 +61,31 @@ export default function AgentPanel() {
       <button
         onClick={() => setOpen(true)}
         title="WithinAgent  (⌘K)"
-        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 bg-[#09090b] text-white text-[12px] font-medium rounded-full pl-3.5 pr-4 py-2.5 shadow-lg hover:bg-[#27272a] transition-colors"
+        aria-label="Ask WithinAgent"
+        className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-40 flex items-center justify-center gap-2 bg-[#111827] text-white text-[12px] font-medium rounded-full w-12 h-12 sm:w-auto sm:h-auto sm:pl-3.5 sm:pr-4 sm:py-2.5 shadow-lg hover:bg-[#1F2937] transition-colors"
       >
-        <Sparkles size={14} />
-        Ask WithinAgent
+        <Sparkles size={14} className="w-[18px] h-[18px] sm:w-3.5 sm:h-3.5" />
+        <span className="hidden sm:inline">Ask WithinAgent</span>
       </button>
     )
   }
 
   return (
     <div
-      className="fixed top-0 right-0 h-screen w-[380px] bg-white z-50 flex flex-col shadow-xl"
-      style={{ borderLeft: '1px solid #e4e4e7', fontFamily: 'Inter, sans-serif' }}
+      className="fixed top-0 right-0 h-dvh w-full sm:w-[380px] bg-white z-[70] flex flex-col shadow-xl"
+      style={{ borderLeft: '1px solid #E5E7EB', fontFamily: 'Inter, sans-serif' }}
     >
       {/* Header */}
-      <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #e4e4e7' }}>
+      <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #E5E7EB' }}>
         <div className="flex items-center gap-2">
-          <Sparkles size={14} className="text-[#2563eb]" />
-          <span className="text-[13px] font-semibold text-[#09090b]">WithinAgent</span>
+          <Sparkles size={14} className="text-[#4F46E5]" />
+          <span className="text-[13px] font-semibold text-[#111827]">WithinAgent</span>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={reset} title="Clear" className="p-1.5 rounded hover:bg-[#f4f4f5] text-[#a1a1aa]">
+          <button onClick={reset} title="Clear" aria-label="Clear conversation" className="p-2.5 sm:p-1.5 rounded hover:bg-[#F3F4F6] text-[#9CA3AF]">
             <RotateCcw size={13} />
           </button>
-          <button onClick={() => setOpen(false)} className="p-1.5 rounded hover:bg-[#f4f4f5] text-[#a1a1aa]">
+          <button onClick={() => setOpen(false)} aria-label="Close" className="p-2.5 sm:p-1.5 rounded hover:bg-[#F3F4F6] text-[#9CA3AF]">
             <X size={14} />
           </button>
         </div>
@@ -94,7 +95,7 @@ export default function AgentPanel() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {messages.length === 0 && (
           <div className="pt-2">
-            <div className="text-[12px] text-[#52525b] mb-2">
+            <div className="text-[12px] text-[#4B5563] mb-2">
               Tell me what you need in plain English. I'll show you a preview before anything is saved.
             </div>
             <div className="space-y-1.5">
@@ -102,7 +103,7 @@ export default function AgentPanel() {
                 <button
                   key={s}
                   onClick={() => (s.endsWith(' ') ? (setInput(s), inputRef.current?.focus()) : send(s))}
-                  className="w-full text-left text-[11px] text-[#52525b] border border-[#e4e4e7] rounded-lg px-2.5 py-2 hover:bg-[#f4f4f5] hover:text-[#09090b]"
+                  className="w-full text-left text-[11px] text-[#4B5563] border border-[#E5E7EB] rounded-lg px-2.5 py-2 hover:bg-[#F3F4F6] hover:text-[#111827]"
                 >
                   {s}
                 </button>
@@ -114,7 +115,7 @@ export default function AgentPanel() {
         {messages.map((entry, i) =>
           entry.role === 'user' ? (
             <div key={i} className="flex justify-end">
-              <div className="bg-[#eff6ff] text-[#09090b] text-[12px] rounded-lg rounded-br-sm px-3 py-1.5 max-w-[85%]">
+              <div className="bg-[#EEF2FF] text-[#111827] text-[12px] rounded-lg rounded-br-sm px-3 py-1.5 max-w-[85%]">
                 {entry.text}
               </div>
             </div>
@@ -134,16 +135,16 @@ export default function AgentPanel() {
         )}
 
         {loading && (
-          <div className="flex gap-1 items-center text-[11px] text-[#a1a1aa]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#d4d4d8] animate-pulse" />
+          <div className="flex gap-1 items-center text-[11px] text-[#9CA3AF]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#D1D5DB] animate-pulse" />
             Thinking…
           </div>
         )}
       </div>
 
       {/* Input */}
-      <form onSubmit={submit} className="p-3" style={{ borderTop: '1px solid #e4e4e7' }}>
-        <div className="flex items-end gap-2 border border-[#e4e4e7] rounded-lg px-2.5 py-2 focus-within:border-[#2563eb]">
+      <form onSubmit={submit} className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]" style={{ borderTop: '1px solid #E5E7EB' }}>
+        <div className="flex items-end gap-2 border border-[#E5E7EB] rounded-lg px-2.5 py-2 focus-within:border-[#4F46E5]">
           <textarea
             ref={inputRef}
             rows={1}
@@ -154,17 +155,17 @@ export default function AgentPanel() {
             }}
             placeholder="Create invoice for…"
             maxLength={500}
-            className="flex-1 text-[12px] outline-none resize-none max-h-24 text-[#09090b] placeholder:text-[#a1a1aa]"
+            className="flex-1 text-[16px] sm:text-[12px] outline-none resize-none max-h-24 text-[#111827] placeholder:text-[#9CA3AF]"
           />
           <button
             type="submit"
             disabled={!input.trim() || loading}
-            className="w-6 h-6 rounded-md bg-[#2563eb] text-white flex items-center justify-center disabled:opacity-30 flex-shrink-0"
+            className="w-6 h-6 rounded-md bg-[#4F46E5] text-white flex items-center justify-center disabled:opacity-30 flex-shrink-0"
           >
             <ArrowUp size={13} />
           </button>
         </div>
-        <div className="text-[10px] text-[#a1a1aa] mt-1.5 px-0.5">
+        <div className="text-[10px] text-[#9CA3AF] mt-1.5 px-0.5">
           Nothing is saved until you confirm.
         </div>
       </form>

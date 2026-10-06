@@ -21,14 +21,14 @@ function CustomerPreview({ entry, onEdit, disabled }) {
   const [state, setState] = useState(p.state || '')
 
   return (
-    <div className="border border-[#e4e4e7] rounded-lg bg-white p-3 space-y-2">
+    <div className="border border-[#E5E7EB] rounded-lg bg-white p-3 space-y-2">
       <div className="flex justify-between text-[11px]">
-        <span className="text-[#71717a]">Name</span>
-        <span className="text-[#09090b] font-medium">{p.name}</span>
+        <span className="text-[#6B7280]">Name</span>
+        <span className="text-[#111827] font-medium">{p.name}</span>
       </div>
 
       <div className="flex justify-between items-center text-[11px]">
-        <span className="text-[#71717a]">State</span>
+        <span className="text-[#6B7280]">State</span>
         <select
           value={state}
           disabled={disabled}
@@ -36,7 +36,7 @@ function CustomerPreview({ entry, onEdit, disabled }) {
             setState(e.target.value)
             onEdit({ ...entry.data, state: e.target.value })
           }}
-          className="border border-[#e4e4e7] rounded px-1.5 py-1 text-[11px] text-[#09090b] max-w-[160px]"
+          className="border border-[#E5E7EB] rounded px-1.5 py-1 text-[11px] text-[#111827] max-w-[160px]"
         >
           <option value="">Select state…</option>
           {INDIAN_STATES.map((s) => (
@@ -47,13 +47,13 @@ function CustomerPreview({ entry, onEdit, disabled }) {
 
       {p.gstin && (
         <div className="flex justify-between text-[11px]">
-          <span className="text-[#71717a]">GSTIN</span>
-          <span className="text-[#09090b] font-medium">{p.gstin}</span>
+          <span className="text-[#6B7280]">GSTIN</span>
+          <span className="text-[#111827] font-medium">{p.gstin}</span>
         </div>
       )}
 
       {p.resumingInvoiceFor && (
-        <div className="text-[10px] text-[#71717a] pt-1 border-t border-[#f4f4f5]">
+        <div className="text-[10px] text-[#6B7280] pt-1 border-t border-[#F3F4F6]">
           Will continue the invoice: {p.resumingInvoiceFor}
         </div>
       )}
@@ -82,11 +82,11 @@ function InvoicePreview({ entry, onEdit, disabled }) {
     )
 
   return (
-    <div className="border border-[#e4e4e7] rounded-lg bg-white overflow-hidden">
-      <div className="px-3 py-2 border-b border-[#e4e4e7] flex items-center justify-between">
+    <div className="border border-[#E5E7EB] rounded-lg bg-white overflow-hidden">
+      <div className="px-3 py-2 border-b border-[#E5E7EB] flex items-center justify-between">
         <div>
-          <div className="text-[12px] font-semibold text-[#09090b]">{p.customer.name}</div>
-          <div className="text-[10px] text-[#71717a]">
+          <div className="text-[12px] font-semibold text-[#111827]">{p.customer.name}</div>
+          <div className="text-[10px] text-[#6B7280]">
             {p.customer.state}
             {p.customer.gstin ? ` · ${p.customer.gstin}` : ''}
             {' · '}
@@ -96,7 +96,7 @@ function InvoicePreview({ entry, onEdit, disabled }) {
         <button
           onClick={() => (editing ? applyEdits() : setEditing(true))}
           disabled={disabled}
-          className="text-[11px] text-[#2563eb] flex items-center gap-1 hover:underline disabled:opacity-40"
+          className="text-[11px] text-[#4F46E5] flex items-center gap-1 hover:underline disabled:opacity-40"
         >
           <Pencil size={11} />
           {editing ? 'Apply' : 'Edit'}
@@ -105,7 +105,7 @@ function InvoicePreview({ entry, onEdit, disabled }) {
 
       <table className="w-full text-[11px]">
         <thead>
-          <tr className="text-[#71717a] bg-[#fafafa]">
+          <tr className="text-[#6B7280] bg-[#F9FAFB]">
             <th className="text-left font-medium px-3 py-1.5">Item</th>
             <th className="text-right font-medium px-1 py-1.5">Qty</th>
             <th className="text-right font-medium px-1 py-1.5">Rate</th>
@@ -115,10 +115,10 @@ function InvoicePreview({ entry, onEdit, disabled }) {
         </thead>
         <tbody>
           {p.items.map((item) => (
-            <tr key={item.productId} className="border-t border-[#f4f4f5]">
-              <td className="px-3 py-1.5 text-[#09090b]">
+            <tr key={item.productId} className="border-t border-[#F3F4F6]">
+              <td className="px-3 py-1.5 text-[#111827]">
                 {item.name}
-                {item.hsn && <span className="text-[#a1a1aa]"> · {item.hsn}</span>}
+                {item.hsn && <span className="text-[#9CA3AF]"> · {item.hsn}</span>}
               </td>
               <td className="px-1 py-1.5 text-right">
                 {editing ? (
@@ -127,21 +127,21 @@ function InvoicePreview({ entry, onEdit, disabled }) {
                     min="1"
                     value={draft.find((d) => d.productId === item.productId)?.quantity ?? item.quantity}
                     onChange={(e) => setQty(item.productId, e.target.value)}
-                    className="w-12 border border-[#e4e4e7] rounded px-1 py-0.5 text-right text-[11px]"
+                    className="w-12 border border-[#E5E7EB] rounded px-1 py-0.5 text-right text-[11px]"
                   />
                 ) : (
                   item.quantity
                 )}
               </td>
-              <td className="px-1 py-1.5 text-right text-[#52525b]">{inr(item.unitPrice)}</td>
-              <td className="px-1 py-1.5 text-right text-[#52525b]">{item.taxRate ?? 0}%</td>
-              <td className="px-3 py-1.5 text-right font-medium text-[#09090b]">{inr(item.total)}</td>
+              <td className="px-1 py-1.5 text-right text-[#4B5563]">{inr(item.unitPrice)}</td>
+              <td className="px-1 py-1.5 text-right text-[#4B5563]">{item.taxRate ?? 0}%</td>
+              <td className="px-3 py-1.5 text-right font-medium text-[#111827]">{inr(item.total)}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <div className="px-3 py-2 border-t border-[#e4e4e7] bg-[#fafafa] text-[11px] space-y-0.5">
+      <div className="px-3 py-2 border-t border-[#E5E7EB] bg-[#F9FAFB] text-[11px] space-y-0.5">
         <Row label="Taxable value" value={inr(p.subtotal)} />
         {p.taxType === 'IGST' ? (
           <Row label="IGST" value={inr(p.igst)} />
@@ -151,7 +151,7 @@ function InvoicePreview({ entry, onEdit, disabled }) {
             <Row label="SGST" value={inr(p.sgst)} />
           </>
         )}
-        <div className="flex justify-between pt-1 mt-1 border-t border-[#e4e4e7] text-[12px] font-semibold text-[#09090b]">
+        <div className="flex justify-between pt-1 mt-1 border-t border-[#E5E7EB] text-[12px] font-semibold text-[#111827]">
           <span>Total</span>
           <span>{inr(p.totalAmount)}</span>
         </div>
@@ -161,7 +161,7 @@ function InvoicePreview({ entry, onEdit, disabled }) {
 }
 
 const Row = ({ label, value }) => (
-  <div className="flex justify-between text-[#52525b]">
+  <div className="flex justify-between text-[#4B5563]">
     <span>{label}</span>
     <span>{value}</span>
   </div>
@@ -180,11 +180,11 @@ function ProductPreview({ entry }) {
     ['Unit', p.unit || '—'],
   ]
   return (
-    <div className="border border-[#e4e4e7] rounded-lg bg-white p-3 space-y-1">
+    <div className="border border-[#E5E7EB] rounded-lg bg-white p-3 space-y-1">
       {fields.map(([k, v]) => (
         <div key={k} className="flex justify-between text-[11px]">
-          <span className="text-[#71717a]">{k}</span>
-          <span className="text-[#09090b] font-medium">{v}</span>
+          <span className="text-[#6B7280]">{k}</span>
+          <span className="text-[#111827] font-medium">{v}</span>
         </div>
       ))}
     </div>
@@ -197,13 +197,13 @@ function ProductPreview({ entry }) {
 function ResultTable({ table }) {
   if (!table?.rows?.length) return null
   return (
-    <div className="border border-[#e4e4e7] rounded-lg bg-white overflow-hidden">
+    <div className="border border-[#E5E7EB] rounded-lg bg-white overflow-hidden">
       <table className="w-full text-[11px]">
         <tbody>
           {table.rows.map((row) => (
-            <tr key={row.id} className="border-b border-[#f4f4f5] last:border-0">
+            <tr key={row.id} className="border-b border-[#F3F4F6] last:border-0">
               {table.columns.map((col) => (
-                <td key={col} className="px-2.5 py-1.5 text-[#52525b] first:text-[#09090b] first:font-medium">
+                <td key={col} className="px-2.5 py-1.5 text-[#4B5563] first:text-[#111827] first:font-medium">
                   {col === 'totalAmount' || col === 'price'
                     ? inr(row[col])
                     : col === 'tax' && row[col] != null
@@ -212,7 +212,7 @@ function ResultTable({ table }) {
                 </td>
               ))}
               <td className="px-2 py-1.5 text-right">
-                <Link to={row.link} className="text-[#2563eb]">
+                <Link to={row.link} className="text-[#4F46E5]">
                   <ExternalLink size={11} />
                 </Link>
               </td>
@@ -221,7 +221,7 @@ function ResultTable({ table }) {
         </tbody>
       </table>
       {table.totalCount > table.rows.length && (
-        <div className="px-2.5 py-1.5 text-[10px] text-[#71717a] bg-[#fafafa]">
+        <div className="px-2.5 py-1.5 text-[10px] text-[#6B7280] bg-[#F9FAFB]">
           Showing {table.rows.length} of {table.totalCount}
         </div>
       )}
@@ -238,7 +238,7 @@ export default function AgentPreview({ entry, isPending, isLatest, onConfirm, on
       {entry.message && (
         <div
           className={`text-[12px] ${
-            entry.status === 'error' ? 'text-[#791F1F]' : 'text-[#52525b]'
+            entry.status === 'error' ? 'text-[#791F1F]' : 'text-[#4B5563]'
           }`}
         >
           {entry.message}
@@ -264,14 +264,14 @@ export default function AgentPreview({ entry, isPending, isLatest, onConfirm, on
       {entry.clarify?.map((c) =>
         c.candidates?.length ? (
           <div key={c.query} className="space-y-1">
-            <div className="text-[10px] text-[#71717a] uppercase tracking-wide">{c.field}: {c.query}</div>
+            <div className="text-[10px] text-[#6B7280] uppercase tracking-wide">{c.field}: {c.query}</div>
             {c.candidates.map((cand) => (
               <div
                 key={cand.id}
-                className="border border-[#e4e4e7] rounded px-2.5 py-1.5 text-[11px] text-[#09090b] bg-white"
+                className="border border-[#E5E7EB] rounded px-2.5 py-1.5 text-[11px] text-[#111827] bg-white"
               >
                 {cand.name}
-                <span className="text-[#71717a]">
+                <span className="text-[#6B7280]">
                   {cand.state ? ` · ${cand.state}` : ''}
                   {cand.stock != null ? ` · ${cand.stock} in stock` : ''}
                 </span>
@@ -285,14 +285,14 @@ export default function AgentPreview({ entry, isPending, isLatest, onConfirm, on
         <button
           onClick={() => onCreateCustomer(entry.offerCreateCustomer)}
           disabled={loading}
-          className="w-full text-[11px] font-medium text-[#2563eb] border border-[#2563eb]/30 bg-[#eff6ff] rounded-lg px-2.5 py-2 hover:bg-[#dbeafe] disabled:opacity-40"
+          className="w-full text-[11px] font-medium text-[#4F46E5] border border-[#4F46E5]/30 bg-[#EEF2FF] rounded-lg px-2.5 py-2 hover:bg-[#E0E7FF] disabled:opacity-40"
         >
           + Create "{entry.offerCreateCustomer.name}" as a new customer
         </button>
       )}
 
       {entry.status === 'result' && entry.link && (
-        <Link to={entry.link} className="inline-flex items-center gap-1 text-[11px] text-[#2563eb] hover:underline">
+        <Link to={entry.link} className="inline-flex items-center gap-1 text-[11px] text-[#4F46E5] hover:underline">
           Open <ExternalLink size={11} />
         </Link>
       )}
@@ -303,7 +303,7 @@ export default function AgentPreview({ entry, isPending, isLatest, onConfirm, on
           <button
             onClick={onConfirm}
             disabled={loading || entry.blocked}
-            className="flex-1 flex items-center justify-center gap-1.5 bg-[#2563eb] text-white text-[12px] font-medium rounded-lg py-2 hover:bg-[#1d4ed8] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-1.5 bg-[#4F46E5] text-white text-[12px] font-medium rounded-lg py-2 hover:bg-[#4338CA] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Check size={13} />
             {entry.blocked
@@ -315,7 +315,7 @@ export default function AgentPreview({ entry, isPending, isLatest, onConfirm, on
           <button
             onClick={onCancel}
             disabled={loading}
-            className="px-3 flex items-center justify-center gap-1.5 border border-[#e4e4e7] text-[#52525b] text-[12px] rounded-lg py-2 hover:bg-[#f4f4f5]"
+            className="px-3 flex items-center justify-center gap-1.5 border border-[#E5E7EB] text-[#4B5563] text-[12px] rounded-lg py-2 hover:bg-[#F3F4F6]"
           >
             <X size={13} />
           </button>

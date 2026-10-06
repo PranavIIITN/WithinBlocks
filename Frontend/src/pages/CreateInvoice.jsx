@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { Fragment, useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Search, Plus, Trash2, ChevronDown, UserPlus } from 'lucide-react'
@@ -206,12 +206,12 @@ export default function CreateInvoice() {
   }
 
   const inputStyle = {
-    border: '1px solid #e4e4e7',
+    border: '1px solid #E5E7EB',
     background: '#fff',
     borderRadius: '6px',
     padding: '8px 12px',
     fontSize: '13px',
-    color: '#09090b',
+    color: '#111827',
     outline: 'none',
     width: '100%',
   }
@@ -227,21 +227,21 @@ export default function CreateInvoice() {
   return (
     <div className="flex flex-col h-full overflow-hidden bg-white">
       {/* Topbar */}
-      <div className="flex items-center justify-between px-6 h-[56px] bg-white flex-shrink-0" style={{ borderBottom: '1px solid #e4e4e7' }}>
+      <div className="flex items-center justify-between px-4 lg:px-6 h-[56px] bg-white flex-shrink-0" style={{ borderBottom: '1px solid #E5E7EB' }}>
         <div className="flex items-center gap-3">
-          <div className="text-[16px] font-semibold text-[#09090b] flex items-center gap-2">
+          <div className="text-[16px] font-semibold text-[#111827] flex items-center gap-2">
             <span>📄</span> New Invoice
           </div>
         </div>
-        <button onClick={() => navigate('/invoices')} className="text-[#71717a] hover:text-[#09090b] cursor-pointer text-[20px]">✕</button>
+        <button onClick={() => navigate('/invoices')} className="text-[#6B7280] hover:text-[#111827] cursor-pointer text-[20px]">✕</button>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto p-6">
+        <div className="max-w-5xl mx-auto p-4 pb-24 lg:p-6">
 
           {/* Customer + Invoice details */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
             {/* Customer */}
             <div>
@@ -250,14 +250,14 @@ export default function CreateInvoice() {
                 {selectedCustomer ? (
                   <div
                     className="flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer"
-                    style={{ border: '1px solid #e4e4e7' }}
+                    style={{ border: '1px solid #E5E7EB' }}
                     onClick={() => setSelectedCustomer(null)}
                   >
                     <div>
-                      <div className="text-[13px] font-medium text-[#09090b]">{selectedCustomer.name}</div>
-                      {selectedCustomer.gstin && <div className="text-[11px] text-[#71717a]">GSTIN: {selectedCustomer.gstin}</div>}
+                      <div className="text-[13px] font-medium text-[#111827]">{selectedCustomer.name}</div>
+                      {selectedCustomer.gstin && <div className="text-[11px] text-[#6B7280]">GSTIN: {selectedCustomer.gstin}</div>}
                     </div>
-                    <ChevronDown size={14} className="text-[#71717a]" />
+                    <ChevronDown size={14} className="text-[#6B7280]" />
                   </div>
                 ) : (
                   <div className="flex gap-2">
@@ -272,23 +272,23 @@ export default function CreateInvoice() {
                       {showCustomerDropdown && (customerResults.length > 0 || customerSearch.length > 1) && (
                         <div
                           className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-lg z-20 mt-1 overflow-y-auto"
-                          style={{ border: '1px solid #e4e4e7', maxHeight: '280px' }}
+                          style={{ border: '1px solid #E5E7EB', maxHeight: '280px' }}
                         >
                           {customerResults.map(c => (
                             <div
                               key={c.id}
                               onClick={() => { setSelectedCustomer(c); setShowCustomerDropdown(false); setCustomerSearch('') }}
-                              className="px-4 py-3 hover:bg-[#f4f4f5] cursor-pointer"
-                              style={{ borderBottom: '1px solid #f4f4f5' }}
+                              className="px-4 py-3 hover:bg-[#F3F4F6] cursor-pointer"
+                              style={{ borderBottom: '1px solid #F3F4F6' }}
                             >
-                              <div className="text-[13px] font-medium text-[#09090b]">{c.name}</div>
-                              <div className="text-[11px] text-[#71717a]">{c.phone} {c.gstin && `· GSTIN: ${c.gstin}`}</div>
+                              <div className="text-[13px] font-medium text-[#111827]">{c.name}</div>
+                              <div className="text-[11px] text-[#6B7280]">{c.phone} {c.gstin && `· GSTIN: ${c.gstin}`}</div>
                             </div>
                           ))}
                           {customerSearch.length > 1 && (
                             <div
                               onClick={openAddCustomer}
-                              className="flex items-center gap-2 px-4 py-3 hover:bg-[#eff6ff] cursor-pointer text-[#2563eb]"
+                              className="flex items-center gap-2 px-4 py-3 hover:bg-[#EEF2FF] cursor-pointer text-[#4F46E5]"
                             >
                               <UserPlus size={14} />
                               <span className="text-[13px] font-medium">
@@ -299,7 +299,7 @@ export default function CreateInvoice() {
                         </div>
                       )}
                     </div>
-                    <button className="px-3 py-2 rounded-lg text-white text-[13px] cursor-pointer" style={{ background: '#2563eb' }}>
+                    <button className="px-3 py-2 rounded-lg text-white text-[13px] cursor-pointer" style={{ background: '#4F46E5' }}>
                       <Search size={14} />
                     </button>
                   </div>
@@ -308,7 +308,7 @@ export default function CreateInvoice() {
             </div>
 
             {/* Invoice details */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label style={{ ...labelStyle, color: '#ef4444' }}>Invoice # *</label>
                 <input
@@ -319,7 +319,7 @@ export default function CreateInvoice() {
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, color: '#52525b' }}>Invoice Date *</label>
+                <label style={{ ...labelStyle, color: '#4B5563' }}>Invoice Date *</label>
                 <input
                   type="date"
                   style={inputStyle}
@@ -328,23 +328,23 @@ export default function CreateInvoice() {
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, color: '#52525b' }}>Terms</label>
+                <label style={{ ...labelStyle, color: '#4B5563' }}>Terms</label>
                 <div className="relative">
                   <button
                     onClick={() => setShowTermsDropdown(!showTermsDropdown)}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] text-[#09090b]"
-                    style={{ border: '1px solid #e4e4e7' }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] text-[#111827]"
+                    style={{ border: '1px solid #E5E7EB' }}
                   >
                     {paymentTerm.label}
-                    <ChevronDown size={14} className="text-[#71717a]" />
+                    <ChevronDown size={14} className="text-[#6B7280]" />
                   </button>
                   {showTermsDropdown && (
-                    <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-lg z-20 mt-1 overflow-hidden" style={{ border: '1px solid #e4e4e7' }}>
+                    <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-lg z-20 mt-1 overflow-hidden" style={{ border: '1px solid #E5E7EB' }}>
                       {PAYMENT_TERMS.map(term => (
                         <div
                           key={term.label}
                           onClick={() => { setPaymentTerm(term); setShowTermsDropdown(false) }}
-                          className="px-4 py-2.5 hover:bg-[#f4f4f5] cursor-pointer text-[13px] text-[#09090b]"
+                          className="px-4 py-2.5 hover:bg-[#F3F4F6] cursor-pointer text-[13px] text-[#111827]"
                         >
                           {term.label}
                         </div>
@@ -354,7 +354,7 @@ export default function CreateInvoice() {
                 </div>
               </div>
               <div>
-                <label style={{ ...labelStyle, color: '#52525b' }}>Due Date</label>
+                <label style={{ ...labelStyle, color: '#4B5563' }}>Due Date</label>
                 <input
                   type="date"
                   style={inputStyle}
@@ -366,18 +366,18 @@ export default function CreateInvoice() {
           </div>
 
           {/* Items Table */}
-          <div className="mb-4" style={{ border: '1px solid #e4e4e7', borderRadius: '8px' }}>
-            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #e4e4e7' }}>
-              <div className="text-[13px] font-semibold text-[#09090b]">Item Table</div>
+          <div className="mb-4" style={{ border: '1px solid #E5E7EB', borderRadius: '8px' }}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #E5E7EB' }}>
+              <div className="text-[13px] font-semibold text-[#111827]">Item Table</div>
               <div className="flex items-center gap-3">
-                <button className="flex items-center gap-1.5 text-[12px] text-[#2563eb] cursor-pointer">
+                <button className="flex items-center gap-1.5 text-[12px] text-[#4F46E5] cursor-pointer">
                   📷 Scan Item
                 </button>
               </div>
             </div>
 
             {/* Table Header */}
-            <div className="grid text-[11px] font-semibold text-[#71717a] uppercase tracking-wide px-4 py-2 bg-[#fafafa]" style={{ gridTemplateColumns: ITEM_GRID_COLS, gap: '8px', borderBottom: '1px solid #e4e4e7' }}>
+            <div className="hidden lg:grid text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide px-4 py-2 bg-[#F9FAFB]" style={{ gridTemplateColumns: ITEM_GRID_COLS, gap: '8px', borderBottom: '1px solid #E5E7EB' }}>
               <div>HSN Code</div>
               <div>Item</div>
               <div className="text-right">Qty</div>
@@ -395,21 +395,83 @@ export default function CreateInvoice() {
             {items.map((item, index) => {
               const itemTax = calculateItemTax(item)
               return (
+              <Fragment key={item.productId}>
+              {/* Phones and tablets: one card per line item */}
+              <div className="lg:hidden px-4 py-3" style={{ borderBottom: '1px solid #F3F4F6' }}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-medium text-[#111827]">{item.name}</div>
+                    {item.hsn && <div className="text-[11px] text-[#6B7280]">HSN {item.hsn}</div>}
+                  </div>
+                  <button
+                    onClick={() => removeItem(item.productId)}
+                    aria-label={`Remove ${item.name}`}
+                    className="p-2 -m-2 text-[#9CA3AF] hover:text-[#ef4444] cursor-pointer flex-shrink-0"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-3 mt-3">
+                  <label className="block text-[11px] text-[#6B7280]">
+                    Qty
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="1"
+                      value={item.quantity}
+                      onChange={e => updateItem(item.productId, 'quantity', e.target.value)}
+                      className="mt-1 w-full px-2.5 py-2 rounded-lg text-[#111827] outline-none"
+                      style={{ border: '1px solid #E5E7EB' }}
+                    />
+                  </label>
+                  <label className="block text-[11px] text-[#6B7280]">
+                    Rate
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      value={item.unitPrice}
+                      onChange={e => updateItem(item.productId, 'unitPrice', e.target.value)}
+                      className="mt-1 w-full px-2.5 py-2 rounded-lg text-[#111827] outline-none"
+                      style={{ border: '1px solid #E5E7EB' }}
+                    />
+                  </label>
+                  <label className="block text-[11px] text-[#6B7280]">
+                    Tax %
+                    <select
+                      value={item.tax}
+                      onChange={e => updateItem(item.productId, 'tax', e.target.value)}
+                      className="mt-1 w-full px-2 py-2 rounded-lg text-[#111827] bg-white outline-none"
+                      style={{ border: '1px solid #E5E7EB' }}
+                    >
+                      {[0, 5, 12, 18, 28].map(r => (
+                        <option key={r} value={r}>{r}%</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="mt-3 text-[12px] text-[#4B5563] space-y-1">
+                  <div className="flex justify-between"><span>Total (pre-tax)</span><span>₹{itemTax.subtotal.toFixed(2)}</span></div>
+                  {itemTax.cgst > 0 && <div className="flex justify-between"><span>CGST</span><span>₹{itemTax.cgst.toFixed(2)}</span></div>}
+                  {itemTax.sgst > 0 && <div className="flex justify-between"><span>SGST</span><span>₹{itemTax.sgst.toFixed(2)}</span></div>}
+                  {itemTax.igst > 0 && <div className="flex justify-between"><span>IGST</span><span>₹{itemTax.igst.toFixed(2)}</span></div>}
+                  <div className="flex justify-between text-[13px] font-medium text-[#111827]"><span>Line total</span><span>₹{itemTax.total.toFixed(2)}</span></div>
+                </div>
+              </div>
+
               <div
-                key={item.productId}
-                className="grid px-4 py-3 items-center"
+                className="hidden lg:grid px-4 py-3 items-center"
                 style={{
                   gridTemplateColumns: ITEM_GRID_COLS,
                   gap: '8px',
-                  borderBottom: '1px solid #f4f4f5',
-                  background: index % 2 === 0 ? '#fff' : '#fafafa'
+                  borderBottom: '1px solid #F3F4F6',
+                  background: index % 2 === 0 ? '#fff' : '#F9FAFB'
                 }}
               >
                 {/* HSN */}
-                <div className="text-[12px] text-[#52525b]">{item.hsn || '—'}</div>
+                <div className="text-[12px] text-[#4B5563]">{item.hsn || '—'}</div>
 
                 {/* Item name */}
-                <div className="text-[13px] font-medium text-[#09090b] truncate" title={item.name}>{item.name}</div>
+                <div className="text-[13px] font-medium text-[#111827] truncate" title={item.name}>{item.name}</div>
 
                 {/* Quantity */}
                 <div className="flex justify-end">
@@ -418,7 +480,7 @@ export default function CreateInvoice() {
                     value={item.quantity}
                     onChange={e => updateItem(item.productId, 'quantity', e.target.value)}
                     className="text-right w-16 px-2 py-1 rounded text-[13px] outline-none"
-                    style={{ border: '1px solid #e4e4e7' }}
+                    style={{ border: '1px solid #E5E7EB' }}
                     min="1"
                   />
                 </div>
@@ -430,12 +492,12 @@ export default function CreateInvoice() {
                     value={item.unitPrice}
                     onChange={e => updateItem(item.productId, 'unitPrice', e.target.value)}
                     className="text-right w-20 px-2 py-1 rounded text-[13px] outline-none"
-                    style={{ border: '1px solid #e4e4e7' }}
+                    style={{ border: '1px solid #E5E7EB' }}
                   />
                 </div>
 
                 {/* Total (pre-tax) */}
-                <div className="text-right text-[13px] text-[#52525b]">₹{itemTax.subtotal.toFixed(2)}</div>
+                <div className="text-right text-[13px] text-[#4B5563]">₹{itemTax.subtotal.toFixed(2)}</div>
 
                 {/* Tax % */}
                 <div className="flex justify-end">
@@ -443,7 +505,7 @@ export default function CreateInvoice() {
                     value={item.tax}
                     onChange={e => updateItem(item.productId, 'tax', e.target.value)}
                     className="text-right px-1 py-1 rounded text-[12px] outline-none"
-                    style={{ border: '1px solid #e4e4e7' }}
+                    style={{ border: '1px solid #E5E7EB' }}
                   >
                     {[0, 5, 12, 18, 28].map(r => (
                       <option key={r} value={r}>{r}%</option>
@@ -452,41 +514,42 @@ export default function CreateInvoice() {
                 </div>
 
                 {/* CGST */}
-                <div className="text-right text-[12px] text-[#52525b]">
+                <div className="text-right text-[12px] text-[#4B5563]">
                   {itemTax.cgst > 0 ? `₹${itemTax.cgst.toFixed(2)}` : '—'}
                 </div>
 
                 {/* SGST */}
-                <div className="text-right text-[12px] text-[#52525b]">
+                <div className="text-right text-[12px] text-[#4B5563]">
                   {itemTax.sgst > 0 ? `₹${itemTax.sgst.toFixed(2)}` : '—'}
                 </div>
 
                 {/* IGST */}
-                <div className="text-right text-[12px] text-[#52525b]">
+                <div className="text-right text-[12px] text-[#4B5563]">
                   {itemTax.igst > 0 ? `₹${itemTax.igst.toFixed(2)}` : '—'}
                 </div>
 
                 {/* Taxable Value (line total incl. tax) */}
-                <div className="text-right text-[13px] font-medium text-[#09090b]">
+                <div className="text-right text-[13px] font-medium text-[#111827]">
                   ₹{itemTax.total.toFixed(2)}
                 </div>
 
                 {/* Delete */}
                 <button
                   onClick={() => removeItem(item.productId)}
-                  className="text-[#a1a1aa] hover:text-[#ef4444] cursor-pointer flex justify-end"
+                  className="text-[#9CA3AF] hover:text-[#ef4444] cursor-pointer flex justify-end"
                 >
                   <Trash2 size={13} />
                 </button>
               </div>
+              </Fragment>
               )
             })}
 
             {/* Add item row */}
-            <div ref={productRef} className="px-4 py-3 relative" style={{ borderBottom: '1px solid #e4e4e7' }}>
+            <div ref={productRef} className="px-4 py-3 relative" style={{ borderBottom: '1px solid #E5E7EB' }}>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ border: '1px dashed #d1d5db', background: '#fafafa' }}>
-                  <span className="text-[#a1a1aa] text-[18px]">📦</span>
+                <div className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ border: '1px dashed #d1d5db', background: '#F9FAFB' }}>
+                  <span className="text-[#9CA3AF] text-[18px]">📦</span>
                 </div>
                 <input
                   style={{ ...inputStyle, border: 'none', background: 'transparent', padding: '0' }}
@@ -499,27 +562,27 @@ export default function CreateInvoice() {
               {showProductDropdown && productResults.length > 0 && (
                 <div
                   className="absolute top-full left-4 right-4 bg-white rounded-lg shadow-lg z-20 mt-1 overflow-y-auto"
-                  style={{ border: '1px solid #e4e4e7', maxHeight: '280px' }}
+                  style={{ border: '1px solid #E5E7EB', maxHeight: '280px' }}
                 >
                   {productResults.map(p => (
                     <div
                       key={p.id}
                       onClick={() => addProduct(p)}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-[#f4f4f5] cursor-pointer"
-                      style={{ borderBottom: '1px solid #f4f4f5' }}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-[#F3F4F6] cursor-pointer"
+                      style={{ borderBottom: '1px solid #F3F4F6' }}
                     >
-                      <div className="w-8 h-8 rounded overflow-hidden flex-shrink-0" style={{ border: '1px solid #e4e4e7' }}>
+                      <div className="w-8 h-8 rounded overflow-hidden flex-shrink-0" style={{ border: '1px solid #E5E7EB' }}>
                         {p.image ? (
                           <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full bg-[#f4f4f5] flex items-center justify-center text-[12px]">📦</div>
+                          <div className="w-full h-full bg-[#F3F4F6] flex items-center justify-center text-[12px]">📦</div>
                         )}
                       </div>
                       <div className="flex-1">
-                        <div className="text-[13px] font-medium text-[#09090b]">{p.name}</div>
-                        <div className="text-[11px] text-[#71717a]">Stock: {p.stock} · ₹{p.price} · Tax: {p.tax}%</div>
+                        <div className="text-[13px] font-medium text-[#111827]">{p.name}</div>
+                        <div className="text-[11px] text-[#6B7280]">Stock: {p.stock} · ₹{p.price} · Tax: {p.tax}%</div>
                       </div>
-                      <div className="text-[13px] font-medium text-[#09090b]">₹{p.price}</div>
+                      <div className="text-[13px] font-medium text-[#111827]">₹{p.price}</div>
                     </div>
                   ))}
                 </div>
@@ -528,7 +591,7 @@ export default function CreateInvoice() {
 
             {/* Add New Row button */}
             <div className="px-4 py-2 flex items-center gap-4">
-              <button className="flex items-center gap-1.5 text-[12px] text-[#2563eb] cursor-pointer hover:underline">
+              <button className="flex items-center gap-1.5 text-[12px] text-[#4F46E5] cursor-pointer hover:underline">
                 <Plus size={13} />
                 Add New Row
               </button>
@@ -536,30 +599,30 @@ export default function CreateInvoice() {
           </div>
 
           {/* Notes + Totals */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
             {/* Left — Notes & Terms */}
             <div className="flex flex-col gap-4">
               <div>
-                <label className="block text-[12px] font-medium text-[#09090b] mb-1.5">Customer Notes</label>
+                <label className="block text-[12px] font-medium text-[#111827] mb-1.5">Customer Notes</label>
                 <textarea
                   value={form.notes}
                   onChange={e => setForm({ ...form, notes: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 rounded-lg text-[13px] text-[#09090b] outline-none resize-none"
-                  style={{ border: '1px solid #e4e4e7' }}
+                  className="w-full px-3 py-2 rounded-lg text-[13px] text-[#111827] outline-none resize-none"
+                  style={{ border: '1px solid #E5E7EB' }}
                 />
-                <div className="text-[11px] text-[#71717a] mt-1">Will be displayed on the invoice</div>
+                <div className="text-[11px] text-[#6B7280] mt-1">Will be displayed on the invoice</div>
               </div>
               <div>
-                <label className="block text-[12px] font-medium text-[#09090b] mb-1.5">Terms & Conditions</label>
+                <label className="block text-[12px] font-medium text-[#111827] mb-1.5">Terms & Conditions</label>
                 <textarea
                   value={form.termsAndConditions}
                   onChange={e => setForm({ ...form, termsAndConditions: e.target.value })}
                   rows={3}
                   placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
-                  className="w-full px-3 py-2 rounded-lg text-[13px] text-[#09090b] outline-none resize-none"
-                  style={{ border: '1px solid #e4e4e7' }}
+                  className="w-full px-3 py-2 rounded-lg text-[13px] text-[#111827] outline-none resize-none"
+                  style={{ border: '1px solid #E5E7EB' }}
                 />
               </div>
             </div>
@@ -567,37 +630,37 @@ export default function CreateInvoice() {
             {/* Right — Totals */}
             <div>
               {items.length > 0 && (
-                <div className="text-[11px] text-[#71717a] mb-1.5">
+                <div className="text-[11px] text-[#6B7280] mb-1.5">
                   {company?.state && selectedCustomer?.state
                     ? (isInterState ? 'Inter-state transaction — IGST applies' : 'Intra-state transaction — CGST + SGST applies')
                     : 'Add a state for your company/customer for an accurate tax split'}
                 </div>
               )}
-              <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #e4e4e7' }}>
-                <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
-                  <span className="font-semibold text-[#09090b]">Sub Total</span>
-                  <span className="font-semibold text-[#09090b]">₹{subtotal.toFixed(2)}</span>
+              <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E5E7EB' }}>
+                <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #E5E7EB' }}>
+                  <span className="font-semibold text-[#111827]">Sub Total</span>
+                  <span className="font-semibold text-[#111827]">₹{subtotal.toFixed(2)}</span>
                 </div>
                 {isInterState ? (
-                  <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
-                    <span className="text-[#71717a]">IGST</span>
-                    <span className="text-[#09090b]">₹{totalIgst.toFixed(2)}</span>
+                  <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    <span className="text-[#6B7280]">IGST</span>
+                    <span className="text-[#111827]">₹{totalIgst.toFixed(2)}</span>
                   </div>
                 ) : (
                   <>
-                    <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
-                      <span className="text-[#71717a]">CGST</span>
-                      <span className="text-[#09090b]">₹{totalCgst.toFixed(2)}</span>
+                    <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      <span className="text-[#6B7280]">CGST</span>
+                      <span className="text-[#111827]">₹{totalCgst.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #e4e4e7' }}>
-                      <span className="text-[#71717a]">SGST</span>
-                      <span className="text-[#09090b]">₹{totalSgst.toFixed(2)}</span>
+                    <div className="flex justify-between px-4 py-3 text-[13px]" style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      <span className="text-[#6B7280]">SGST</span>
+                      <span className="text-[#111827]">₹{totalSgst.toFixed(2)}</span>
                     </div>
                   </>
                 )}
                 <div className="flex justify-between px-4 py-3">
-                  <span className="text-[14px] font-bold text-[#09090b]">Total (₹)</span>
-                  <span className="text-[14px] font-bold text-[#09090b]">₹{total.toFixed(2)}</span>
+                  <span className="text-[14px] font-bold text-[#111827]">Total (₹)</span>
+                  <span className="text-[14px] font-bold text-[#111827]">₹{total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -613,13 +676,13 @@ export default function CreateInvoice() {
       </div>
 
       {/* Bottom action bar — like Zoho */}
-      <div className="flex items-center justify-between px-6 py-4 bg-white flex-shrink-0" style={{ borderTop: '1px solid #e4e4e7' }}>
-        <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between max-lg:flex-col-reverse max-lg:items-stretch max-lg:gap-3 px-4 lg:px-6 py-3 lg:py-4 bg-white flex-shrink-0" style={{ borderTop: '1px solid #E5E7EB' }}>
+        <div className="flex items-center gap-4 max-lg:justify-between max-lg:gap-2">
           <button
             onClick={() => handleSave('DRAFT')}
             disabled={createMutation.isPending}
-            className="px-4 py-2 rounded-lg text-[13px] text-[#09090b] cursor-pointer disabled:opacity-50"
-            style={{ border: '1px solid #e4e4e7' }}
+            className="px-4 py-2 rounded-lg text-[13px] text-[#111827] cursor-pointer disabled:opacity-50"
+            style={{ border: '1px solid #E5E7EB' }}
           >
             Save as Draft
           </button>
@@ -627,21 +690,21 @@ export default function CreateInvoice() {
             onClick={() => handleSave('UNPAID')}
             disabled={createMutation.isPending}
             className="px-4 py-2 rounded-lg text-[13px] font-medium text-white cursor-pointer disabled:opacity-50"
-            style={{ background: '#2563eb' }}
+            style={{ background: '#4F46E5' }}
           >
             {createMutation.isPending ? 'Saving...' : 'Save and Send'}
           </button>
           <button
             onClick={() => navigate('/invoices')}
-            className="px-4 py-2 text-[13px] text-[#71717a] cursor-pointer hover:text-[#09090b]"
+            className="px-4 py-2 text-[13px] text-[#6B7280] cursor-pointer hover:text-[#111827]"
           >
             Cancel
           </button>
         </div>
-        <div className="text-[13px] text-[#71717a]">
-          Total Amount: <span className="font-semibold text-[#09090b]">₹{total.toFixed(2)}</span>
+        <div className="text-[13px] text-[#6B7280] max-lg:text-center">
+          Total Amount: <span className="font-semibold text-[#111827]">₹{total.toFixed(2)}</span>
           <span className="mx-3">·</span>
-          Total Quantity: <span className="font-semibold text-[#09090b]">{totalQty}</span>
+          Total Quantity: <span className="font-semibold text-[#111827]">{totalQty}</span>
         </div>
       </div>
 
@@ -649,12 +712,12 @@ export default function CreateInvoice() {
           just reachable without leaving the invoice you're building. */}
       {showAddCustomer && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl w-[440px] p-6" style={{ border: '1px solid #e4e4e7' }}>
+          <div className="bg-white rounded-xl w-[calc(100vw-2rem)] max-w-[440px] max-h-[90dvh] overflow-y-auto p-6 shadow-[0_1px_2px_rgba(16,24,40,0.05),0_1px_3px_rgba(16,24,40,0.06)]">
             <div className="flex items-center justify-between mb-5">
-              <div className="text-[15px] font-semibold text-[#09090b]">Add new customer</div>
+              <div className="text-[15px] font-semibold text-[#111827]">Add new customer</div>
               <button
                 onClick={() => setShowAddCustomer(false)}
-                className="text-[#a1a1aa] hover:text-[#09090b] cursor-pointer"
+                className="text-[#9CA3AF] hover:text-[#111827] cursor-pointer"
               >
                 ✕
               </button>
@@ -672,9 +735,9 @@ export default function CreateInvoice() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label style={{ ...labelStyle, color: '#52525b' }}>Email</label>
+                  <label style={{ ...labelStyle, color: '#4B5563' }}>Email</label>
                   <input
                     type="email"
                     style={inputStyle}
@@ -683,7 +746,7 @@ export default function CreateInvoice() {
                   />
                 </div>
                 <div>
-                  <label style={{ ...labelStyle, color: '#52525b' }}>Phone</label>
+                  <label style={{ ...labelStyle, color: '#4B5563' }}>Phone</label>
                   <input
                     style={inputStyle}
                     value={newCustomer.phone}
@@ -693,7 +756,7 @@ export default function CreateInvoice() {
               </div>
 
               <div>
-                <label style={{ ...labelStyle, color: '#52525b' }}>Address</label>
+                <label style={{ ...labelStyle, color: '#4B5563' }}>Address</label>
                 <input
                   style={inputStyle}
                   value={newCustomer.address}
@@ -717,7 +780,7 @@ export default function CreateInvoice() {
               </div>
 
               <div>
-                <label style={{ ...labelStyle, color: '#52525b' }}>GSTIN</label>
+                <label style={{ ...labelStyle, color: '#4B5563' }}>GSTIN</label>
                 <input
                   style={{ ...inputStyle, fontFamily: 'monospace' }}
                   value={newCustomer.gstin}
@@ -736,8 +799,8 @@ export default function CreateInvoice() {
                 <button
                   type="button"
                   onClick={() => setShowAddCustomer(false)}
-                  className="flex-1 py-2 rounded-lg text-[13px] text-[#09090b] cursor-pointer"
-                  style={{ border: '1px solid #e4e4e7' }}
+                  className="flex-1 py-2 rounded-lg text-[13px] text-[#111827] cursor-pointer"
+                  style={{ border: '1px solid #E5E7EB' }}
                 >
                   Cancel
                 </button>
@@ -745,7 +808,7 @@ export default function CreateInvoice() {
                   type="submit"
                   disabled={createCustomerMutation.isPending}
                   className="flex-1 py-2 rounded-lg text-[13px] font-medium text-white cursor-pointer disabled:opacity-50"
-                  style={{ background: '#2563eb' }}
+                  style={{ background: '#4F46E5' }}
                 >
                   {createCustomerMutation.isPending ? 'Adding…' : 'Add & use this customer'}
                 </button>

@@ -1,12 +1,12 @@
 import { INDIAN_STATES } from '../constants/indianStates'
 
 const inputClass = "w-full px-3 py-2.5 rounded-lg text-[13px] outline-none"
-const labelClass = "block text-[12px] font-medium text-[#09090b] mb-1.5"
+const labelClass = "block text-[12px] font-medium text-[#111827] mb-1.5"
 
 const getInputStyle = (disabled) => ({
-  border: '1px solid #e4e4e7',
-  background: disabled ? '#f4f4f5' : '#fafafa',
-  color: disabled ? '#a1a1aa' : '#09090b',
+  border: '1px solid #E5E7EB',
+  background: disabled ? '#F3F4F6' : '#F9FAFB',
+  color: disabled ? '#9CA3AF' : '#111827',
   cursor: disabled ? 'not-allowed' : 'text',
 })
 
@@ -19,7 +19,7 @@ export default function CompanyDetailsForm({ form, setForm, disabled = false }) 
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Company name *</label>
           <input
@@ -47,7 +47,7 @@ export default function CompanyDetailsForm({ form, setForm, disabled = false }) 
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Business phone</label>
           <input
@@ -82,7 +82,7 @@ export default function CompanyDetailsForm({ form, setForm, disabled = false }) 
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Invoice prefix</label>
           <input

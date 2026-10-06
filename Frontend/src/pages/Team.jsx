@@ -66,7 +66,7 @@ export default function Team() {
   if (currentUser?.role !== 'OWNER') {
     return (
       <div className="flex flex-col h-full items-center justify-center bg-white">
-        <div className="text-[13px] text-[#71717a]">Only the account owner can manage team members.</div>
+        <div className="text-[13px] text-[#6B7280]">Only the account owner can manage team members.</div>
       </div>
     )
   }
@@ -74,12 +74,12 @@ export default function Team() {
   return (
     <div className="flex flex-col h-full overflow-hidden bg-white">
       {/* Topbar */}
-      <div className="flex items-center justify-between px-6 h-[56px] flex-shrink-0" style={{ borderBottom: '1px solid #e4e4e7' }}>
-        <div className="text-[16px] font-semibold text-[#09090b]">Team</div>
+      <div className="flex items-center justify-between px-4 lg:px-6 h-[56px] flex-shrink-0" style={{ borderBottom: '1px solid #E5E7EB' }}>
+        <div className="text-[16px] font-semibold text-[#111827]">Team</div>
         <button
           onClick={() => setShowInvite(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-[13px] font-medium cursor-pointer"
-          style={{ background: '#2563eb' }}
+          style={{ background: '#4F46E5' }}
         >
           <UserPlus size={14} />
           Invite member
@@ -87,13 +87,13 @@ export default function Team() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #e4e4e7' }}>
-          <table className="w-full text-[13px]">
+      <div className="flex-1 overflow-y-auto p-4 pb-24 lg:p-6">
+        <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E5E7EB' }}>
+          <div className="max-lg:overflow-x-auto"><table className="w-full text-[13px] max-lg:min-w-[640px]">
             <thead>
-              <tr className="bg-[#fafafa]">
+              <tr className="bg-[#F9FAFB]">
                 {['Name', 'Email', 'Role', 'Status', ''].map((h) => (
-                  <th key={h} className="text-left px-4 py-2.5 text-[11px] font-medium text-[#71717a]" style={{ borderBottom: '1px solid #e4e4e7' }}>
+                  <th key={h} className="text-left px-4 py-2.5 text-[11px] font-medium text-[#6B7280]" style={{ borderBottom: '1px solid #E5E7EB' }}>
                     {h}
                   </th>
                 ))}
@@ -101,21 +101,21 @@ export default function Team() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={5} className="px-4 py-8 text-center text-[#71717a]">Loading…</td></tr>
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-[#6B7280]">Loading…</td></tr>
               ) : listError ? (
                 <tr><td colSpan={5} className="px-4 py-8 text-center text-[#791F1F]">Could not load team members.</td></tr>
               ) : users.length === 0 ? (
-                <tr><td colSpan={5} className="px-4 py-8 text-center text-[#71717a]">No team members yet.</td></tr>
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-[#6B7280]">No team members yet.</td></tr>
               ) : (
                 users.map((u) => (
-                  <tr key={u.id} className="hover:bg-[#fafafa]" style={{ borderBottom: '1px solid #f4f4f5' }}>
-                    <td className="px-4 py-3 font-medium text-[#09090b]">
-                      {u.name || <span className="text-[#a1a1aa] font-normal italic">Invite pending</span>}
-                      {u.id === currentUser?.id && <span className="text-[11px] text-[#71717a] font-normal"> (you)</span>}
+                  <tr key={u.id} className="hover:bg-[#F9FAFB]" style={{ borderBottom: '1px solid #F3F4F6' }}>
+                    <td className="px-4 py-3 font-medium text-[#111827]">
+                      {u.name || <span className="text-[#9CA3AF] font-normal italic">Invite pending</span>}
+                      {u.id === currentUser?.id && <span className="text-[11px] text-[#6B7280] font-normal"> (you)</span>}
                     </td>
-                    <td className="px-4 py-3 text-[#52525b]">{u.email}</td>
+                    <td className="px-4 py-3 text-[#4B5563]">{u.email}</td>
                     <td className="px-4 py-3">
-                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f4f4f5] text-[#52525b] font-medium">
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#F3F4F6] text-[#4B5563] font-medium">
                         {u.role}
                       </span>
                     </td>
@@ -135,7 +135,7 @@ export default function Team() {
                             }
                           }}
                           disabled={deactivateMutation.isPending}
-                          className="flex items-center gap-1 text-[12px] text-[#a1a1aa] hover:text-[#ef4444] cursor-pointer ml-auto disabled:opacity-50"
+                          className="flex items-center gap-1 text-[12px] text-[#9CA3AF] hover:text-[#ef4444] cursor-pointer ml-auto disabled:opacity-50"
                         >
                           <ShieldOff size={12} />
                           Deactivate
@@ -146,7 +146,7 @@ export default function Team() {
                 ))
               )}
             </tbody>
-          </table>
+          </table></div>
         </div>
 
         {deactivateMutation.isError && (
@@ -159,16 +159,16 @@ export default function Team() {
       {/* Invite modal */}
       {showInvite && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl w-[420px] p-6" style={{ border: '1px solid #e4e4e7' }}>
+          <div className="bg-white rounded-xl w-[calc(100vw-2rem)] max-w-[420px] max-h-[90dvh] overflow-y-auto p-6 shadow-[0_1px_2px_rgba(16,24,40,0.05),0_1px_3px_rgba(16,24,40,0.06)]">
             <div className="flex items-center justify-between mb-5">
-              <div className="text-[15px] font-semibold text-[#09090b]">Invite a team member</div>
-              <button onClick={closeInviteModal} className="text-[#a1a1aa] hover:text-[#09090b] cursor-pointer">✕</button>
+              <div className="text-[15px] font-semibold text-[#111827]">Invite a team member</div>
+              <button onClick={closeInviteModal} className="text-[#9CA3AF] hover:text-[#111827] cursor-pointer">✕</button>
             </div>
 
             {!inviteSuccess ? (
               <form onSubmit={handleInvite} className="flex flex-col gap-3.5">
                 <div>
-                  <label className="block text-[12px] font-medium text-[#09090b] mb-1.5">Email address</label>
+                  <label className="block text-[12px] font-medium text-[#111827] mb-1.5">Email address</label>
                   <input
                     type="email"
                     value={email}
@@ -176,10 +176,10 @@ export default function Team() {
                     placeholder="colleague@company.com"
                     required
                     autoFocus
-                    className="w-full px-3 py-2 rounded-lg text-[13px] text-[#09090b] outline-none"
-                    style={{ border: '1px solid #e4e4e7' }}
+                    className="w-full px-3 py-2 rounded-lg text-[13px] text-[#111827] outline-none"
+                    style={{ border: '1px solid #E5E7EB' }}
                   />
-                  <div className="text-[11px] text-[#71717a] mt-1.5">
+                  <div className="text-[11px] text-[#6B7280] mt-1.5">
                     They'll be invited as Staff — able to create invoices and view company data, but not manage the team or company settings.
                   </div>
                 </div>
@@ -194,8 +194,8 @@ export default function Team() {
                   <button
                     type="button"
                     onClick={closeInviteModal}
-                    className="flex-1 py-2 rounded-lg text-[13px] text-[#09090b] cursor-pointer"
-                    style={{ border: '1px solid #e4e4e7' }}
+                    className="flex-1 py-2 rounded-lg text-[13px] text-[#111827] cursor-pointer"
+                    style={{ border: '1px solid #E5E7EB' }}
                   >
                     Cancel
                   </button>
@@ -203,7 +203,7 @@ export default function Team() {
                     type="submit"
                     disabled={inviteMutation.isPending}
                     className="flex-1 py-2 rounded-lg text-[13px] font-medium text-white cursor-pointer disabled:opacity-50"
-                    style={{ background: '#2563eb' }}
+                    style={{ background: '#4F46E5' }}
                   >
                     {inviteMutation.isPending ? 'Sending…' : 'Send invite'}
                   </button>
@@ -212,7 +212,7 @@ export default function Team() {
             ) : (
               <div className="flex flex-col gap-3.5">
                 {emailSent ? (
-                  <div className="text-[13px] text-[#52525b]">
+                  <div className="text-[13px] text-[#4B5563]">
                     Invite email sent{lastInviteLink ? '. You can also share this link directly if needed:' : '.'}
                   </div>
                 ) : (
@@ -221,18 +221,18 @@ export default function Team() {
                   </div>
                 )}
                 {lastInviteLink && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ border: '1px solid #e4e4e7', background: '#fafafa' }}>
-                    <div className="flex-1 text-[12px] text-[#52525b] truncate font-mono">{lastInviteLink}</div>
-                    <button onClick={copyLink} className="flex-shrink-0 text-[#2563eb] cursor-pointer">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ border: '1px solid #E5E7EB', background: '#F9FAFB' }}>
+                    <div className="flex-1 text-[12px] text-[#4B5563] truncate font-mono">{lastInviteLink}</div>
+                    <button onClick={copyLink} className="flex-shrink-0 text-[#4F46E5] cursor-pointer">
                       {copied ? <Check size={14} /> : <Copy size={14} />}
                     </button>
                   </div>
                 )}
-                <div className="text-[11px] text-[#a1a1aa]">This link expires in 24 hours and can only be used once.</div>
+                <div className="text-[11px] text-[#9CA3AF]">This link expires in 24 hours and can only be used once.</div>
                 <button
                   onClick={closeInviteModal}
                   className="py-2 rounded-lg text-[13px] font-medium text-white cursor-pointer"
-                  style={{ background: '#2563eb' }}
+                  style={{ background: '#4F46E5' }}
                 >
                   Done
                 </button>
