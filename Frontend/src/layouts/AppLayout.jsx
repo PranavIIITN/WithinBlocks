@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import {
   LayoutDashboard, Package, Users, FileText, BarChart2, Settings, LogOut, HelpCircle, UserCog,
@@ -7,6 +7,8 @@ import {
 import useAuthStore from '../store/authStore'
 import AgentPanel from '../components/agent/AgentPanel'
 import Landing from '../pages/Landing'
+import Tour from '../components/tour/Tour'
+import { buildTourSteps, hasTourPending, clearTourPending } from '../components/tour/tourSteps'
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -50,12 +52,13 @@ function useIsDesktop() {
 
 const ring = 'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#818CF8]'
 
-function NavItem({ to, end, icon: Icon, label, collapsed, onNavigate }) {
+function NavItem({ to, end, icon: Icon, label, collapsed, onNavigate, tour }) {
   return (
     <NavLink
       to={to}
       end={end}
       onClick={onNavigate}
+      data-tour={tour}
       title={collapsed ? label : undefined}
       className={({ isActive }) =>
         `relative flex items-center h-10 lg:h-9 rounded-lg text-[13px] mb-0.5 transition-colors ${ring} ${
@@ -86,6 +89,28 @@ export default function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const isDesktop = useIsDesktop()
   const firstRun = useRef(true)
+  const [tourOpen, setTourOpen] = useState(false)
+  const tourSteps = useMemo(() => buildTourSteps(user), [user])
+
+  // On phones the nav lives in the drawer, so the tour opens/closes it as needed.
+  const handleTourStep = useCallback((step) => {
+    if (!window.matchMedia('(min-width: 1024px)').matches) setDrawerOpen(!!step?.sidebar)
+  }, [])
+  const closeTour = useCallback(() => {
+    setTourOpen(false)
+    setDrawerOpen(false)
+  }, [])
+
+  // First sign-up only: the flag is set when the account is created. Peek here and
+  // clear it when the tour actually starts, so it can never replay by itself.
+  useEffect(() => {
+    if (!token || !hasTourPending(user?.id)) return
+    const id = setTimeout(() => {
+      clearTourPending()
+      setTourOpen(true)
+    }, 700)
+    return () => clearTimeout(id)
+  }, [token, user?.id])
   // The icon-only rail is a desktop thing; the mobile drawer is always full width.
   const collapsed = collapsedPref && isDesktop
 
@@ -198,31 +223,36 @@ export default function AppLayout() {
         {/* Nav */}
         <nav className="flex-1 px-3 py-2 overflow-y-auto">
           {navItems.map((item) => (
-            <NavItem key={item.path} to={item.path} end={item.path === '/'} icon={item.icon} label={item.label} collapsed={collapsed} onNavigate={closeDrawer} />
+            <NavItem key={item.path} to={item.path} end={item.path === '/'} icon={item.icon} label={item.label} collapsed={collapsed} onNavigate={closeDrawer} tour={`nav-${item.label.toLowerCase()}`} />
           ))}
 
           {/* Owner-only — matches backend authorizeOwner on every /users route */}
           {user?.role === 'OWNER' && (
-            <NavItem to="/team" icon={UserCog} label="Team" collapsed={collapsed} onNavigate={closeDrawer} />
+            <NavItem to="/team" icon={UserCog} label="Team" collapsed={collapsed} onNavigate={closeDrawer} tour="nav-team" />
           )}
 
           <div className="h-px my-3" style={{ background: SIDEBAR_RAISED }} />
 
           {bottomItems.map((item) => (
-            <NavItem key={item.path} to={item.path} icon={item.icon} label={item.label} collapsed={collapsed} onNavigate={closeDrawer} />
+            <NavItem key={item.path} to={item.path} icon={item.icon} label={item.label} collapsed={collapsed} onNavigate={closeDrawer} tour={`nav-${item.label.toLowerCase()}`} />
           ))}
         </nav>
 
-        {/* Help */}
+        {/* Help: replays the product tour */}
         <div className="px-3 pb-2">
           <button
             type="button"
-            title={collapsed ? 'Need help?' : undefined}
-            className={`w-full flex items-center h-9 rounded-lg text-[13px] hover:bg-[#1E293B]/60 hover:text-white transition-colors cursor-pointer ${ring} ${collapsed ? 'justify-center' : 'gap-3 px-3'}`}
+            onClick={() => {
+              closeDrawer()
+              setTourOpen(true)
+            }}
+            data-tour="help"
+            title={collapsed ? 'Take the tour' : undefined}
+            className={`w-full flex items-center h-10 lg:h-9 rounded-lg text-[13px] hover:bg-[#1E293B]/60 hover:text-white transition-colors cursor-pointer ${ring} ${collapsed ? 'justify-center' : 'gap-3 px-3'}`}
             style={{ color: SIDEBAR_TEXT }}
           >
             <HelpCircle size={16} className="shrink-0" />
-            <span className={collapsed ? 'sr-only' : ''}>Need help?</span>
+            <span className={collapsed ? 'sr-only' : ''}>Take the tour</span>
           </button>
         </div>
 
@@ -291,12 +321,24 @@ export default function AppLayout() {
           <div className="text-[15px] font-semibold tracking-tight text-[#111827]">
             within<span style={{ color: '#4F46E5' }}>blocks</span>
           </div>
+          <button
+            type="button"
+            onClick={() => setTourOpen(true)}
+            data-tour="help"
+            aria-label="Take the product tour"
+            title="Take the tour"
+            className="ml-auto -mr-2 p-2 rounded-lg text-[#4B5563] hover:bg-[#F3F4F6] transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#4F46E5]"
+          >
+            <HelpCircle size={20} />
+          </button>
         </header>
         <Outlet />
       </div>
 
       {/* WithinAgent — mounted at the layout so it's available on every page */}
       <AgentPanel />
+
+      {tourOpen && <Tour steps={tourSteps} onStepChange={handleTourStep} onClose={closeTour} />}
     </div>
   )
 }

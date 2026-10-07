@@ -8,6 +8,7 @@ import AuthLayout from '../components/auth/AuthLayout'
 import { LiveInvoice } from '../components/auth/scenes'
 import { Heading, ErrorNote, Field, PasswordField, SelectField, SubmitButton, linkCls } from '../components/auth/fields'
 import { BLUE_L, LINE, MUTED, focusRing } from '../components/auth/theme'
+import { markTourPending } from '../components/tour/tourSteps'
 
 // Shown while the sign-up request is in flight.
 function Setup({ company, state }) {
@@ -100,6 +101,7 @@ export default function Register() {
       })
       const { token, user, company } = res.data.data
       setAuth(token, user, company)
+      markTourPending(user?.id) // brand-new account: show the welcome tour once
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong')

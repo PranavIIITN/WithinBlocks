@@ -6,6 +6,7 @@ import AuthLayout from '../components/auth/AuthLayout'
 import { TeamScene } from '../components/auth/scenes'
 import { Heading, ErrorNote, Field, PasswordField, SubmitButton, linkCls } from '../components/auth/fields'
 import { MUTED } from '../components/auth/theme'
+import { markTourPending } from '../components/tour/tourSteps'
 
 export default function AcceptInvite() {
   const navigate = useNavigate()
@@ -39,6 +40,7 @@ export default function AcceptInvite() {
       })
       const { token: jwt, user, company } = res.data.data
       setAuth(jwt, user, company)
+      markTourPending(user?.id) // first time in: show the welcome tour once
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong')

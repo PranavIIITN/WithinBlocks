@@ -62,6 +62,7 @@ export default function AgentPanel() {
         onClick={() => setOpen(true)}
         title="WithinAgent  (⌘K)"
         aria-label="Ask WithinAgent"
+        data-tour="agent"
         className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-40 flex items-center justify-center gap-2 bg-[#111827] text-white text-[12px] font-medium rounded-full w-12 h-12 sm:w-auto sm:h-auto sm:pl-3.5 sm:pr-4 sm:py-2.5 shadow-lg hover:bg-[#1F2937] transition-colors"
       >
         <Sparkles size={14} className="w-[18px] h-[18px] sm:w-3.5 sm:h-3.5" />
