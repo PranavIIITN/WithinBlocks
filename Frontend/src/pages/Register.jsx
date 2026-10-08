@@ -1,12 +1,56 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, Navigate, Link } from 'react-router-dom'
+import { ArrowLeft, Check } from 'lucide-react'
 import api from '../services/api'
 import useAuthStore from '../store/authStore'
 import { INDIAN_STATES } from '../constants/indianStates'
+import AuthLayout from '../components/auth/AuthLayout'
+import { LiveInvoice } from '../components/auth/scenes'
+import { Heading, ErrorNote, Field, PasswordField, SelectField, SubmitButton, linkCls } from '../components/auth/fields'
+import { BLUE_L, LINE, MUTED, focusRing } from '../components/auth/theme'
+import { markTourPending } from '../components/tour/tourSteps'
+
+// Shown while the sign-up request is in flight.
+function Setup({ company, state }) {
+  const [tick, setTick] = useState(0)
+  useEffect(() => {
+    const a = setTimeout(() => setTick(1), 700)
+    const b = setTimeout(() => setTick(2), 1500)
+    return () => {
+      clearTimeout(a)
+      clearTimeout(b)
+    }
+  }, [])
+
+  const steps = [`Creating ${company}`, `Applying GST rules for ${state}`, 'Opening your workspace']
+  return (
+    <div>
+      <Heading title="Setting up your workspace" sub="This only takes a moment." />
+      <ul className="space-y-4" aria-live="polite">
+        {steps.map((text, i) => (
+          <li key={text} className="flex items-center gap-3 text-[14px]" style={{ color: i <= tick ? '#f4f6fb' : '#4b5366' }}>
+            <span
+              className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+              style={i < tick ? { background: 'rgba(34,197,94,0.16)', color: '#4ade80' } : { border: `1px solid ${LINE}` }}
+            >
+              {i < tick ? (
+                <Check size={12} />
+              ) : i === tick ? (
+                <span className="w-3 h-3 rounded-full border-2 border-[#60a5fa]/30 border-t-[#60a5fa] animate-spin" />
+              ) : null}
+            </span>
+            <span className="truncate">{text}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
 
 export default function Register() {
   const navigate = useNavigate()
-  const { setAuth } = useAuthStore()
+  const { token, setAuth } = useAuthStore()
+  const [step, setStep] = useState(0)
   const [form, setForm] = useState({
     companyName: '',
     state: '',
@@ -17,6 +61,20 @@ export default function Register() {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Already signed in — skip the form, same reasoning as AppLayout's guard.
+  // Placed after every hook above (never before) so hook call order stays
+  // identical across renders — putting this earlier, before useState calls,
+  // would violate React's Rules of Hooks.
+  if (token) return <Navigate to="/" replace />
+
+  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
+
+  const handleContinue = (e) => {
+    e.preventDefault()
+    setError('')
+    setStep(1)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -43,6 +101,7 @@ export default function Register() {
       })
       const { token, user, company } = res.data.data
       setAuth(token, user, company)
+      markTourPending(user?.id) // brand-new account: show the welcome tour once
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong')
@@ -52,184 +111,104 @@ export default function Register() {
   }
 
   return (
-    <div className="flex h-screen bg-[#f4f4f5]" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <AuthLayout aside={<LiveInvoice companyName={form.companyName} state={form.state} name={form.name} />}>
+      {loading ? (
+        <Setup company={form.companyName.trim()} state={form.state} />
+      ) : (
+        <>
+          <div className="flex items-center gap-3 mb-8">
+            <div className="flex gap-1.5 flex-1" aria-hidden>
+              {[0, 1].map((i) => (
+                <div key={i} className="h-1 flex-1 rounded-full transition-colors duration-300" style={{ background: i <= step ? BLUE_L : LINE }} />
+              ))}
+            </div>
+            <span className="text-[12px]" style={{ color: MUTED }}>Step {step + 1} of 2</span>
+          </div>
 
-      {/* Left panel */}
-      <div className="hidden lg:flex w-[55%] bg-[#0f1117] flex-col justify-between p-12">
-        <div className="text-[15px] font-semibold text-white tracking-tight">
-          within<span style={{ color: '#2563eb' }}>blocks</span>
-        </div>
-        <div>
-          <h1 className="text-[36px] font-semibold text-white leading-tight tracking-tight mb-6">
-            Everything your business<br />needs, in one place.
-          </h1>
-          <p className="text-[15px] leading-relaxed max-w-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            Join hundreds of Indian distributors and wholesalers managing their business with WithinBlocks.
+          {step === 0 ? (
+            <>
+              <Heading title="Set up your company" sub="Tell us about your business. Your invoice fills in as you go." />
+              <form onSubmit={handleContinue} className="flex flex-col gap-5">
+                <Field
+                  label="Company name"
+                  placeholder="e.g. Sunrise Foods"
+                  autoComplete="organization"
+                  autoFocus
+                  value={form.companyName}
+                  onChange={set('companyName')}
+                  required
+                />
+                <SelectField
+                  label="Company state"
+                  hint="Used to decide CGST/SGST vs IGST on your invoices."
+                  value={form.state}
+                  onChange={set('state')}
+                  required
+                >
+                  <option value="" disabled>Select state</option>
+                  {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </SelectField>
+                <SubmitButton>Continue</SubmitButton>
+              </form>
+            </>
+          ) : (
+            <>
+              <Heading title="Now, you" sub="Create the sign-in you’ll use every day." />
+              {error && <ErrorNote>{error}</ErrorNote>}
+              <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                <Field
+                  label="Your name"
+                  placeholder="e.g. Rohan"
+                  autoComplete="name"
+                  autoFocus
+                  value={form.name}
+                  onChange={set('name')}
+                  required
+                />
+                <Field
+                  label="Email address"
+                  type="email"
+                  placeholder="you@company.com"
+                  autoComplete="email"
+                  value={form.email}
+                  onChange={set('email')}
+                  required
+                />
+                <PasswordField
+                  label="Password"
+                  placeholder="At least 6 characters"
+                  autoComplete="new-password"
+                  value={form.password}
+                  onChange={set('password')}
+                  required
+                />
+                <PasswordField
+                  label="Confirm password"
+                  placeholder="Repeat your password"
+                  autoComplete="new-password"
+                  value={form.confirmPassword}
+                  onChange={set('confirmPassword')}
+                  required
+                />
+                <SubmitButton loading={loading} loadingText="Creating account…">Create account</SubmitButton>
+                <button
+                  type="button"
+                  onClick={() => { setError(''); setStep(0) }}
+                  className={`self-start flex items-center gap-1.5 text-[13px] rounded hover:text-white transition-colors cursor-pointer ${focusRing}`}
+                  style={{ color: MUTED }}
+                >
+                  <ArrowLeft size={14} /> Back
+                </button>
+              </form>
+            </>
+          )}
+
+          <p className="text-center text-[13px] mt-8" style={{ color: MUTED }}>
+            Already have an account?{' '}
+            <Link to="/login" className={linkCls}>Sign in</Link>
           </p>
-          <div className="mt-12 flex flex-col gap-6">
-            {[
-              { icon: '🧾', text: 'GST-compliant invoices with auto CGST/SGST/IGST calculation' },
-              { icon: '📦', text: 'Inventory tracking with low stock alerts' },
-              { icon: '🤖', text: 'AI agent — create invoices in natural language' },
-              { icon: '👥', text: 'Multi-user support with role based access' },
-            ].map((f, i) => (
-              <div key={i} className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                  {f.icon}
-                </div>
-                <span className="text-[14px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>{f.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="text-[12px]" style={{ color: 'rgba(255,255,255,0.2)' }}>© 2026 WithinBlocks. All rights reserved.</div>
-      </div>
-
-      {/* Right form */}
-      <div className="w-full lg:w-[45%] bg-white flex flex-col justify-center px-14 overflow-y-auto">
-        <div className="text-[15px] font-semibold text-[#09090b] tracking-tight mb-8">
-          within<span style={{ color: '#2563eb' }}>blocks</span>
-        </div>
-
-        <h2 className="text-[22px] font-semibold text-[#09090b] tracking-tight mb-1">Create your account</h2>
-        <p className="text-[14px] mb-8" style={{ color: '#71717a' }}>Set up your company and start managing your business</p>
-
-        {error && (
-          <div className="text-[13px] px-4 py-3 rounded-lg mb-6" style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#ef4444' }}>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
-          {/* Company name */}
-          <div>
-            <label className="block text-[12px] font-medium text-[#09090b] mb-1.5">
-              Company name *
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Swa-Jay Agro Processing"
-              value={form.companyName}
-              onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-lg text-[13px] text-[#09090b] outline-none"
-              style={{ border: '1px solid #e4e4e7', background: '#fafafa' }}
-              required
-            />
-          </div>
-
-          {/* Company state */}
-          <div>
-            <label className="block text-[12px] font-medium text-[#09090b] mb-1.5">
-              Company state *
-            </label>
-            <select
-              value={form.state}
-              onChange={(e) => setForm({ ...form, state: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-lg text-[13px] text-[#09090b] outline-none"
-              style={{ border: '1px solid #e4e4e7', background: '#fafafa' }}
-              required
-            >
-              <option value="" disabled>Select state</option>
-              {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-            <p className="text-[11px] mt-1" style={{ color: '#a1a1aa' }}>
-              Used to determine CGST/SGST vs IGST on your invoices
-            </p>
-          </div>
-
-          {/* Your name */}
-          <div>
-            <label className="block text-[12px] font-medium text-[#09090b] mb-1.5">
-              Your name *
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Pranav"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-lg text-[13px] text-[#09090b] outline-none"
-              style={{ border: '1px solid #e4e4e7', background: '#fafafa' }}
-              required
-            />
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-[12px] font-medium text-[#09090b] mb-1.5">
-              Email address *
-            </label>
-            <input
-              type="email"
-              placeholder="pranav@company.com"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-lg text-[13px] text-[#09090b] outline-none"
-              style={{ border: '1px solid #e4e4e7', background: '#fafafa' }}
-              required
-            />
-          </div>
-
-          {/* Password */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[12px] font-medium text-[#09090b] mb-1.5">
-                Password *
-              </label>
-              <input
-                type="password"
-                placeholder="Min 6 characters"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-lg text-[13px] text-[#09090b] outline-none"
-                style={{ border: '1px solid #e4e4e7', background: '#fafafa' }}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-[12px] font-medium text-[#09090b] mb-1.5">
-                Confirm password *
-              </label>
-              <input
-                type="password"
-                placeholder="Repeat password"
-                value={form.confirmPassword}
-                onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-lg text-[13px] text-[#09090b] outline-none"
-                style={{ border: '1px solid #e4e4e7', background: '#fafafa' }}
-                required
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 rounded-lg text-[14px] font-medium text-white cursor-pointer disabled:opacity-50 mt-1"
-            style={{ background: '#2563eb' }}
-          >
-            {loading ? 'Creating account...' : 'Create account'}
-          </button>
-        </form>
-
-        <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px" style={{ background: '#e4e4e7' }}></div>
-          <span className="text-[12px]" style={{ color: '#a1a1aa' }}>or</span>
-          <div className="flex-1 h-px" style={{ background: '#e4e4e7' }}></div>
-        </div>
-
-        <p className="text-center text-[13px]" style={{ color: '#71717a' }}>
-          Already have an account?{' '}
-          <Link to="/login" style={{ color: '#2563eb' }}>Sign in</Link>
-        </p>
-
-        <p className="text-[11px] text-center mt-6 leading-relaxed" style={{ color: '#a1a1aa' }}>
-          By creating an account you agree to our{' '}
-          <span style={{ color: '#2563eb', cursor: 'pointer' }}>Terms of Service</span>{' '}
-          and{' '}
-          <span style={{ color: '#2563eb', cursor: 'pointer' }}>Privacy Policy</span>
-        </p>
-      </div>
-    </div>
+        </>
+      )}
+    </AuthLayout>
   )
 }

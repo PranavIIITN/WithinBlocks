@@ -114,15 +114,15 @@ export default function EditProduct() {
     })
   }
 
-  const inputClass = "w-full px-3 py-2.5 rounded-lg text-[13px] text-[#09090b] outline-none"
-  const inputStyle = { border: '1px solid #e4e4e7', background: '#fafafa' }
-  const labelClass = "block text-[12px] font-medium text-[#09090b] mb-1.5"
-  const sectionClass = "bg-white rounded-xl p-5 mb-4"
+  const inputClass = "w-full px-3 py-2.5 rounded-lg text-[13px] text-[#111827] outline-none"
+  const inputStyle = { border: '1px solid #E5E7EB', background: '#F9FAFB' }
+  const labelClass = "block text-[12px] font-medium text-[#111827] mb-1.5"
+  const sectionClass = "bg-white rounded-xl p-5 mb-4 shadow-[0_1px_2px_rgba(16,24,40,0.05),0_1px_3px_rgba(16,24,40,0.06)]"
 
   if (isLoading || !form) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-[13px] text-[#71717a]">Loading...</div>
+        <div className="text-[13px] text-[#6B7280]">Loading...</div>
       </div>
     )
   }
@@ -130,23 +130,23 @@ export default function EditProduct() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Topbar */}
-      <div className="flex items-center justify-between px-6 h-[56px] bg-white flex-shrink-0" style={{ borderBottom: '1px solid #e4e4e7' }}>
+      <div className="flex items-center justify-between px-4 lg:px-6 h-[56px] bg-white flex-shrink-0" style={{ borderBottom: '1px solid #E5E7EB' }}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/products')}
-            className="flex items-center gap-1.5 text-[13px] text-[#71717a] hover:text-[#09090b] cursor-pointer"
+            className="flex items-center gap-1.5 text-[13px] text-[#6B7280] hover:text-[#111827] cursor-pointer"
           >
             <ArrowLeft size={14} />
             Products
           </button>
-          <span className="text-[#e4e4e7]">·</span>
-          <div className="text-[14px] font-semibold text-[#09090b]">Edit — {product?.name}</div>
+          <span className="text-[#E5E7EB]">·</span>
+          <div className="text-[14px] font-semibold text-[#111827]">Edit — {product?.name}</div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/products')}
-            className="px-3 py-1.5 rounded-lg text-[13px] text-[#09090b] cursor-pointer"
-            style={{ border: '1px solid #e4e4e7' }}
+            className="px-3 py-1.5 rounded-lg text-[13px] text-[#111827] cursor-pointer"
+            style={{ border: '1px solid #E5E7EB' }}
           >
             Cancel
           </button>
@@ -154,7 +154,7 @@ export default function EditProduct() {
             onClick={handleSubmit}
             disabled={updateMutation.isPending}
             className="px-4 py-1.5 rounded-lg text-[13px] font-medium text-white cursor-pointer disabled:opacity-50"
-            style={{ background: '#2563eb' }}
+            style={{ background: '#4F46E5' }}
           >
             {updateMutation.isPending ? 'Saving...' : 'Save changes'}
           </button>
@@ -162,21 +162,21 @@ export default function EditProduct() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6 bg-[#f4f4f5]">
+      <div className="flex-1 overflow-y-auto p-4 pb-24 lg:p-6 bg-[#F9FAFB]">
         <div className="max-w-4xl mx-auto">
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
               {/* Left — Image */}
               <div className="col-span-1">
-                <div className={sectionClass} style={{ border: '1px solid #e4e4e7' }}>
-                  <div className="text-[13px] font-semibold text-[#09090b] mb-4">Product image</div>
+                <div className={sectionClass}>
+                  <div className="text-[13px] font-semibold text-[#111827] mb-4">Product image</div>
                   <div
                     className="relative rounded-xl overflow-hidden cursor-pointer flex flex-col items-center justify-center"
                     style={{
-                      border: '2px dashed #e4e4e7',
+                      border: '2px dashed #E5E7EB',
                       height: '200px',
-                      background: imagePreview ? 'transparent' : '#fafafa'
+                      background: imagePreview ? 'transparent' : '#F9FAFB'
                     }}
                     onClick={() => fileInputRef.current.click()}
                     onDrop={handleDrop}
@@ -192,12 +192,12 @@ export default function EditProduct() {
                       </>
                     ) : (
                       <>
-                        <div className="w-12 h-12 rounded-xl bg-[#eff6ff] flex items-center justify-center mb-3">
-                          <Package size={22} className="text-[#2563eb]" />
+                        <div className="w-12 h-12 rounded-xl bg-[#EEF2FF] flex items-center justify-center mb-3">
+                          <Package size={22} className="text-[#4F46E5]" />
                         </div>
-                        <div className="text-[13px] font-medium text-[#09090b]">Upload image</div>
-                        <div className="text-[11px] text-[#71717a] mt-1">Drag and drop or click</div>
-                        <div className="text-[10px] text-[#a1a1aa] mt-1">PNG, JPG, WEBP up to 5MB</div>
+                        <div className="text-[13px] font-medium text-[#111827]">Upload image</div>
+                        <div className="text-[11px] text-[#6B7280] mt-1">Drag and drop or click</div>
+                        <div className="text-[10px] text-[#9CA3AF] mt-1">PNG, JPG, WEBP up to 5MB</div>
                       </>
                     )}
                   </div>
@@ -222,11 +222,11 @@ export default function EditProduct() {
               </div>
 
               {/* Right — Details */}
-              <div className="col-span-2">
+              <div className="lg:col-span-2">
 
                 {/* Basic info */}
-                <div className={sectionClass} style={{ border: '1px solid #e4e4e7' }}>
-                  <div className="text-[13px] font-semibold text-[#09090b] mb-4">Basic information</div>
+                <div className={sectionClass}>
+                  <div className="text-[13px] font-semibold text-[#111827] mb-4">Basic information</div>
                   <div className="flex flex-col gap-4">
                     <div>
                       <label className={labelClass}>Product name *</label>
@@ -252,13 +252,13 @@ export default function EditProduct() {
                 </div>
 
                 {/* Pricing */}
-                <div className={sectionClass} style={{ border: '1px solid #e4e4e7' }}>
-                  <div className="text-[13px] font-semibold text-[#09090b] mb-4">Pricing</div>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className={sectionClass}>
+                  <div className="text-[13px] font-semibold text-[#111827] mb-4">Pricing</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className={labelClass}>MRP</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-[#71717a]">₹</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-[#6B7280]">₹</span>
                         <input
                           type="number"
                           value={form.mrp}
@@ -271,7 +271,7 @@ export default function EditProduct() {
                     <div>
                       <label className={labelClass}>Selling price *</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-[#71717a]">₹</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-[#6B7280]">₹</span>
                         <input
                           type="number"
                           value={form.price}
@@ -283,7 +283,7 @@ export default function EditProduct() {
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>Price type</label>
                       <select
@@ -314,9 +314,9 @@ export default function EditProduct() {
                 </div>
 
                 {/* Inventory */}
-                <div className={sectionClass} style={{ border: '1px solid #e4e4e7' }}>
-                  <div className="text-[13px] font-semibold text-[#09090b] mb-4">Inventory & units</div>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className={sectionClass}>
+                  <div className="text-[13px] font-semibold text-[#111827] mb-4">Inventory & units</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className={labelClass}>Stock quantity</label>
                       <input
@@ -356,9 +356,9 @@ export default function EditProduct() {
                 </div>
 
                 {/* Compliance */}
-                <div className={sectionClass} style={{ border: '1px solid #e4e4e7' }}>
-                  <div className="text-[13px] font-semibold text-[#09090b] mb-4">GST compliance</div>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className={sectionClass}>
+                  <div className="text-[13px] font-semibold text-[#111827] mb-4">GST compliance</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>HSN code</label>
                       <input
