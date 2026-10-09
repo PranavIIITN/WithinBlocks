@@ -19,6 +19,17 @@ model Company {
   financialYear  String  @default("2526")
   logo      String?
   signature String?
+
+  // Subscription state — see src/modules/plan. These fields decide what a
+  // company pays for, so only admin/billing code may ever write them. No
+  // customer-facing endpoint should accept them (updateCompany copies its
+  // fields one by one for exactly this reason). Limits and features are NOT
+  // stored here; they live in plan.config.js.
+  plan          Plan          @default(FREE)
+  billingStatus BillingStatus @default(ACTIVE)
+  planStartedAt DateTime      @default(now())
+  planExpiresAt DateTime?     // NULL means "never expires". Never use a far-future date for that.
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -26,6 +37,23 @@ model Company {
   products   Product[]
   customers  Customer[]
   invoices   Invoice[]
+}
+
+enum Plan {
+  FREE
+  STARTER
+  PRO
+}
+
+// Deliberately a separate axis from Plan: PRO + COMPED (a free pilot) is as
+// valid as PRO + ACTIVE (a paying customer). Don't assume a plan implies
+// payment, and keep DB constraints loose so future transitions stay easy.
+enum BillingStatus {
+  TRIALING
+  ACTIVE
+  COMPED
+  EXPIRED
+  CANCELLED
 }
 
 model User {
